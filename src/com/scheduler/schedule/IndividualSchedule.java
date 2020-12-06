@@ -1,4 +1,4 @@
-package com.scheduler;
+package com.scheduler.schedule;
 
 public class IndividualSchedule {
 

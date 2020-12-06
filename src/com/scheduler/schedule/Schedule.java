@@ -1,6 +1,7 @@
-package com.scheduler;
+package com.scheduler.schedule;
 
-import com.scheduler.assistants.Assistant;
+import com.scheduler.assistant.Assistant;
+import com.scheduler.schedule.IndividualSchedule;
 
 import java.util.Map;
 

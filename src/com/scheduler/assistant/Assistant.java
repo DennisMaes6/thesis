@@ -1,6 +1,4 @@
-package com.scheduler.assistants;
-
-import com.scheduler.assistants.AssistantType;
+package com.scheduler.assistant;
 
 public class Assistant {
 

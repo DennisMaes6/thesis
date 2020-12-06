@@ -1,6 +1,6 @@
 package com.scheduler.shifttype;
 
-import com.scheduler.assistants.AssistantType;
+import com.scheduler.assistant.AssistantType;
 import com.scheduler.shifttype.period.ShiftTypePeriod;
 
 import java.util.Arrays;
