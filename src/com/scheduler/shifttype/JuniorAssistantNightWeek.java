@@ -1,9 +1,8 @@
 package com.scheduler.shifttype;
 
 import com.scheduler.assistants.AssistantType;
-import com.scheduler.period.Period;
+import com.scheduler.shifttype.period.ShiftTypePeriod;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,8 +15,8 @@ public class JuniorAssistantNightWeek extends ShiftType {
     }
 
     @Override
-    public Period getSpanningPeriod() {
-        return Period.WEEK;
+    public ShiftTypePeriod getSpanningPeriod() {
+        return ShiftTypePeriod.WEEK;
     }
 
     @Override
