@@ -1,10 +1,12 @@
 package com.scheduler;
 
+import com.scheduler.assistants.Assistant;
+
 import java.util.Map;
 
 public class Schedule {
 
-    Map<Person, Roster> schedule;
+    Map<Assistant, IndividualSchedule> schedule;
 
     public float score() {
         // TODO: implement this.
