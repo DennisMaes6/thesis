@@ -5,6 +5,6 @@ public enum AssistantType {
     JA_F,
     SA,
     SA_F,
-    SA_NEO,
-    SA_F_NEO
+    SA_N,
+    SA_F_N
 }

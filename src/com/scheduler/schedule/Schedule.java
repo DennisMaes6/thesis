@@ -214,23 +214,36 @@ public class Schedule {
 
         StringBuilder result = new StringBuilder();
 
-        result.append(String.format("%1$-" + 20 + "s", ""));
-        for (Day day : days) {
-            result.append(String.format("%1$-" + 5 + "s", day.getDay0fWeek()));
+        result.append(String.format("%1$15s", ""));
+        for (Week week : weeks) {
+            result.append(String.format("%1$-68s", "WEEK " + week.getWeekNumber()));
         }
         result.append("\n");
+        result.append(String.format("%1$15s", ""));
+
+        for (Week week : weeks) {
+            for (Day day : week.getDays()) {
+                result.append(String.format("%1$-9s", day.getDay0fWeek()));
+            }
+            result.append(String.format("%1$5s", ""));
+        }
+        result.append("\n\n");
 
         for (Assistant assistant : this.assistants) {
-            result.append(String.format("%1$-" + 20 + "s", assistant.getName()));
-            for (Day day : days) {
-                ShiftType shiftType = assignmentOn(assistant, day);
-                String string;
-                if (shiftType == null) {
-                    string = "_";
-                } else {
-                    string = shiftType.getId().toString();
+            result.append(String.format("%1$3s", assistant.getName()));
+            result.append(String.format("%1$12s", "(" + assistant.getType().toString() + ")  "));
+            for (Week week : weeks) {
+                for (Day day : week.getDays()) {
+                    ShiftType shiftType = assignmentOn(assistant, day);
+                    String string;
+                    if (shiftType == null) {
+                        string = "_";
+                    } else {
+                        string = shiftType.getId().toString();
+                    }
+                    result.append(String.format("%1$-9s", string));
                 }
-                result.append(String.format("%1$-" + 5 + "s", string));
+                result.append(String.format("%1$5s", ""));
             }
             result.append("\n");
         }

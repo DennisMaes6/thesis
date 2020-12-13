@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Call extends ShiftType {
+public class Call extends WeekShift {
 
     @Override
     public int getRequiredNbAssistants(Day day) {
@@ -24,8 +24,8 @@ public class Call extends ShiftType {
         return new HashSet<>(Arrays.asList(
                 AssistantType.SA,
                 AssistantType.SA_F,
-                AssistantType.SA_NEO,
-                AssistantType.SA_F_NEO
+                AssistantType.SA_N,
+                AssistantType.SA_F_N
             )
         );
     }

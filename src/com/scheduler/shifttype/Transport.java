@@ -16,8 +16,8 @@ public class Transport extends WeekendHolidayShift {
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {
         return new HashSet<>(Arrays.asList(
-                AssistantType.SA_NEO,
-                AssistantType.SA_F_NEO
+                AssistantType.SA_N,
+                AssistantType.SA_F_N
             )
         );
     }

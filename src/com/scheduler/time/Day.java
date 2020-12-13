@@ -21,7 +21,7 @@ public class Day {
 
     public boolean isWeekend() {
         // TODO
-        return this.date.getDay() == 6 || this.date.getDay() == 7;
+        return this.date.getDay() == 6 || this.date.getDay() == 0;
     }
 
     public boolean isHoliday() {
@@ -29,7 +29,16 @@ public class Day {
         return false;
     }
 
-    public int getDay0fWeek() {
-        return this.date.getDay();
+    public String getDay0fWeek() {
+        return switch (this.date.getDay()) {
+            case 1 -> "Mon";
+            case 2 -> "Tue";
+            case 3 -> "Wed";
+            case 4 -> "Thu";
+            case 5 -> "Fri";
+            case 6 -> "Sat";
+            case 0 -> "Sun";
+            default -> throw new IllegalStateException("Unexpected value: " + this.date.getDay());
+        };
     }
 }

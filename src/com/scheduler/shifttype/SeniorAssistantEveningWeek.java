@@ -18,7 +18,7 @@ public class SeniorAssistantEveningWeek extends WeekShift {
     public Set<AssistantType> getAllowedAssistantTypes() {
         return new HashSet<>(Arrays.asList(
                 AssistantType.SA,
-                AssistantType.SA_NEO
+                AssistantType.SA_N
             )
         );
     }

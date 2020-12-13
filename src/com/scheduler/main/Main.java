@@ -19,47 +19,47 @@ public class Main {
 
     public static void main(String[] args) throws ParseException {
         List<Assistant> assistants = Arrays.asList(
-                new Assistant("assistant 1", AssistantType.JA, new HashSet<>()),
-                new Assistant("assistant 2", AssistantType.JA, new HashSet<>()),
-                new Assistant("assistant 3", AssistantType.JA, new HashSet<>()),
-                new Assistant("assistant 4", AssistantType.JA_F, new HashSet<>()),
-                new Assistant("assistant 5", AssistantType.JA_F, new HashSet<>()),
-                new Assistant("assistant 6", AssistantType.JA_F, new HashSet<>()),
-                new Assistant("assistant 7", AssistantType.SA, new HashSet<>()),
-                new Assistant("assistant 8", AssistantType.SA, new HashSet<>()),
-                new Assistant("assistant 9", AssistantType.SA, new HashSet<>()),
-                new Assistant("assistant 10", AssistantType.SA_F, new HashSet<>()),
-                new Assistant("assistant 11", AssistantType.SA_F, new HashSet<>()),
-                new Assistant("assistant 12", AssistantType.SA_F, new HashSet<>()),
-                new Assistant("assistant 13", AssistantType.SA_NEO, new HashSet<>()),
-                new Assistant("assistant 14", AssistantType.SA_NEO, new HashSet<>()),
-                new Assistant("assistant 15", AssistantType.SA_NEO, new HashSet<>()),
-                new Assistant("assistant 15", AssistantType.SA_F_NEO, new HashSet<>()),
-                new Assistant("assistant 15", AssistantType.SA_F_NEO, new HashSet<>()),
-                new Assistant("assistant 15", AssistantType.SA_F_NEO, new HashSet<>())
+                new Assistant("#1", AssistantType.JA, new HashSet<>()),
+                new Assistant("#2", AssistantType.JA, new HashSet<>()),
+                new Assistant("#3", AssistantType.JA, new HashSet<>()),
+                new Assistant("#4", AssistantType.JA_F, new HashSet<>()),
+                new Assistant("#5", AssistantType.JA_F, new HashSet<>()),
+                new Assistant("#6", AssistantType.JA_F, new HashSet<>()),
+                new Assistant("#7", AssistantType.SA, new HashSet<>()),
+                new Assistant("#8", AssistantType.SA, new HashSet<>()),
+                new Assistant("#9", AssistantType.SA, new HashSet<>()),
+                new Assistant("#10", AssistantType.SA_F, new HashSet<>()),
+                new Assistant("#11", AssistantType.SA_F, new HashSet<>()),
+                new Assistant("#12", AssistantType.SA_F, new HashSet<>()),
+                new Assistant("#13", AssistantType.SA_N, new HashSet<>()),
+                new Assistant("#14", AssistantType.SA_N, new HashSet<>()),
+                new Assistant("#15", AssistantType.SA_N, new HashSet<>()),
+                new Assistant("#16", AssistantType.SA_F_N, new HashSet<>()),
+                new Assistant("#17", AssistantType.SA_F_N, new HashSet<>()),
+                new Assistant("#18", AssistantType.SA_F_N, new HashSet<>())
         );
 
         List<Week> weeks = Arrays.asList(
             new Week(1,
                 Arrays.asList(
-                    new Day(2020, 1, 1),
-                    new Day(2020, 1, 2),
                     new Day(2020, 1, 3),
                     new Day(2020, 1, 4),
                     new Day(2020, 1, 5),
                     new Day(2020, 1, 6),
-                    new Day(2020, 1, 7)
+                    new Day(2020, 1, 7),
+                    new Day(2020, 1, 8),
+                    new Day(2020, 1, 9)
                 )
             ),
-            new Week(1,
+            new Week(2,
                 Arrays.asList(
-                    new Day(2020, 1, 8),
-                    new Day(2020, 1, 9),
                     new Day(2020, 1, 10),
                     new Day(2020, 1, 11),
                     new Day(2020, 1, 12),
                     new Day(2020, 1, 13),
-                    new Day(2020, 1, 14)
+                    new Day(2020, 1, 14),
+                    new Day(2020, 1, 15),
+                    new Day(2020, 1, 16)
                 )
             )
         );
