@@ -203,6 +203,10 @@ public class Schedule {
             throw new InvalidDayException("Cannot assign on a free day");
         }
 
+        if (assignmentOn(assistant, day) != null) {
+            throw new InvalidDayException("A shift was already assigned for this assistant on this day");
+        }
+
         this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)] = shiftType;
     }
 
