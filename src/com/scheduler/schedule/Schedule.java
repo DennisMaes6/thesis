@@ -210,4 +210,30 @@ public class Schedule {
         this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)] = shiftType;
     }
 
+    public String toString() {
+
+        StringBuilder result = new StringBuilder();
+
+        result.append(String.format("%1$-" + 20 + "s", ""));
+        for (Day day : days) {
+            result.append(String.format("%1$-" + 5 + "s", day.getDay0fWeek()));
+        }
+        result.append("\n");
+
+        for (Assistant assistant : this.assistants) {
+            result.append(String.format("%1$-" + 20 + "s", assistant.getName()));
+            for (Day day : days) {
+                ShiftType shiftType = assignmentOn(assistant, day);
+                String string;
+                if (shiftType == null) {
+                    string = "_";
+                } else {
+                    string = shiftType.getId().toString();
+                }
+                result.append(String.format("%1$-" + 5 + "s", string));
+            }
+            result.append("\n");
+        }
+        return result.toString();
+    }
 }

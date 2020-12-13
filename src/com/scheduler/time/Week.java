@@ -24,4 +24,8 @@ public class Week {
     public List<Day> getWeekendDays() {
         return this.days.stream().filter(Day::isWeekend).collect(Collectors.toList());
     }
+
+    public List<Day> getHolidays() {
+        return this.days.stream().filter(Day::isHoliday).collect(Collectors.toList());
+    }
 }
