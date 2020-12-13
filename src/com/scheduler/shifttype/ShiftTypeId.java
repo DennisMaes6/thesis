@@ -7,5 +7,5 @@ public enum ShiftTypeId {
     SA_EW,
     SA_WH,
     T,
-    C
+    C,
 }

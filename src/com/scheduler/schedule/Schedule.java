@@ -1,6 +1,7 @@
 package com.scheduler.schedule;
 
 import com.scheduler.assistant.Assistant;
+import com.scheduler.shifttype.ShiftTypePeriod;
 import com.scheduler.time.Day;
 import com.scheduler.shifttype.ShiftType;
 import com.scheduler.time.Week;
@@ -9,14 +10,24 @@ import java.util.*;
 
 public class Schedule {
 
-    private final boolean[][][] schedule;
+    private final ShiftType[][] schedule;
+    private final List<Week> weeks;
+    private final List<Day> days;
+    private final List<Assistant> assistants;
+    private final List<ShiftType> shiftTypes;
 
-    public Schedule(List<Week> weeks, Set<Assistant> assistants, Set<ShiftType> shiftTypes) {
-        int nbDays = 0;
+    public Schedule(List<Week> weeks, List<Assistant> assistants, List<ShiftType> shiftTypes) {
+        this.weeks = weeks;
+        this.assistants = assistants;
+        this.shiftTypes = shiftTypes;
+
+        List<Day> days = new ArrayList<>();
         for (Week week : weeks) {
-            nbDays += week.getDays().size();
+            days.addAll(week.getDays());
         }
-        this.schedule = new boolean[nbDays][assistants.size()][shiftTypes.size()];
+        this.days = days;
+
+        this.schedule = new ShiftType[assistants.size()][days.size()];
     }
 
     public float score() {
@@ -28,8 +39,8 @@ public class Schedule {
      * Checks whether or not all hard constraints for this schedule, with the given shift types, are met.
      * @return True is schedule is valid, false otherwise.
      */
-    public boolean valid(Set<ShiftType> shiftTypes) {
-        return coverageMet(shiftTypes)
+    public boolean valid() {
+        return coverageMet()
             && skillTypesMet()
             && completeWeekendsMet()
             && completeWeeksMet()
@@ -37,74 +48,96 @@ public class Schedule {
     }
 
 
-    private boolean fr
-
     private boolean freeDaysMet() {
-        for (Assistant assistant : this.schedule.keySet()) {
+        for (Assistant assistant : this.assistants) {
             for (Day day : assistant.getFreeDays()) {
-                if (!this.schedule.get(assistant).freeOn(day)) {
+                if (!freeOn(assistant, day)) {
                     return false;
                 }
             }
+        }
+        return true;
+    }
 
+
+    private boolean completeWeekendsMet() {
+        for (Assistant assistant : this.assistants) {
+            for (Week week : this.weeks) {
+                List<ShiftType> assignments = new ArrayList<>();
+                for (Day day : week.getWeekendDays()) {
+                    assignments.add(this.assignmentOn(assistant, day));
+                }
+               if (assignments.stream()
+                       .filter(shiftType -> shiftType == null || shiftType.getSpanningPeriod() == ShiftTypePeriod.WEEKEND_HOLIDAY)
+                       .distinct()
+                       .count() > 1) {
+                   return false;
+               }
+            }
         }
         return true;
     }
 
     private boolean completeWeeksMet() {
-        for (Assistant assistant : this.schedule.keySet()) {
-            if (!this.schedule.get(assistant).completeWeeksMet()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean completeWeekendsMet() {
-        for (Assistant assistant : this.schedule.keySet()) {
-            if (!this.schedule.get(assistant).completeWeekendsMet()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean skillTypesMet() {
-        for (Assistant assistant : this.schedule.keySet()) {
-            if (!this.schedule.get(assistant).skillTypeMet(assistant)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean coverageMet(Set<ShiftType> shiftTypes) {
-        for (Week week : this.weeks) {
-            for (Day day : week.getDays()) {
-                for (ShiftType shiftType : shiftTypes) {
-                    if (getNbAssignmentsOnDayForShiftType(day, shiftType) != shiftType.getRequiredNbAssistants(day)) {
-                        return false;
-                    }
+        for (Assistant assistant : this.assistants) {
+            for (Week week : this.weeks) {
+                List<ShiftType> assignments = new ArrayList<>();
+                for (Day day : week.getDays()) {
+                    assignments.add(this.assignmentOn(assistant, day));
+                }
+                if (assignments.stream()
+                        .filter(shiftType -> shiftType == null || shiftType.getSpanningPeriod() == ShiftTypePeriod.WEEK)
+                        .distinct()
+                        .count() > 1) {
+                    return false;
                 }
             }
         }
         return true;
     }
 
-    private int getNbAssignmentsOnDayForShiftType(Day day, ShiftType shiftType) {
-        int count = 0;
-        for (Assistant assistant : this.schedule.keySet()) {
-            if (schedule.get(assistant).assignmentOn(day).getId().equals(shiftType.getId())) {
-                count++;
+
+    private boolean skillTypesMet() {
+        for (Assistant assistant : this.assistants) {
+            for (Day day : this.days) {
+                ShiftType shiftType = assignmentOn(assistant, day);
+                if (shiftType != null && !shiftType.getAllowedAssistantTypes().contains(assistant.getType())) {
+                    return false;
+                }
             }
         }
-        return count;
+        return true;
+    }
+
+    private boolean coverageMet() {
+        for (ShiftType shiftType : this.shiftTypes) {
+            for (Day day: this.days) {
+                int sum = 0;
+                for (Assistant assistant : this.assistants) {
+                    if (assignmentOn(assistant, day) == shiftType) {
+                        sum++;
+                    }
+                }
+                if (sum != shiftType.getRequiredNbAssistants(day)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
+    private boolean freeOn(Assistant assistant, Day day) {
+        return null == this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)];
+    }
+
+    private ShiftType assignmentOn(Assistant assistant, Day day) {
+        return this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)];
     }
 
     public void addAssignment(Assistant assistant, Day day, ShiftType shiftType) {
-        if (!this.schedule.keySet().contains(assistant)) {
-           this.schedule.put(assistant, new IndividualSchedule());
-        }
-        this.schedule.get(assistant).addAssignment(day, shiftType);
+        this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)] = shiftType;
     }
+
+
 }

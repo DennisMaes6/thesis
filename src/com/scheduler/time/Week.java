@@ -1,6 +1,7 @@
 package com.scheduler.time;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Week {
 
@@ -18,5 +19,9 @@ public class Week {
 
     public List<Day> getDays() {
         return days;
+    }
+
+    public List<Day> getWeekendDays() {
+        return this.days.stream().filter(Day::isWeekend).collect(Collectors.toList());
     }
 }
