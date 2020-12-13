@@ -4,9 +4,8 @@ import com.scheduler.assistant.Assistant;
 import com.scheduler.exceptions.AssignWholeWeekendsException;
 import com.scheduler.exceptions.AssignWholeWeeksException;
 import com.scheduler.exceptions.InvalidShiftTypeException;
-import com.scheduler.shifttype.ShiftTypePeriod;
+import com.scheduler.shifttype.*;
 import com.scheduler.time.Day;
-import com.scheduler.shifttype.ShiftType;
 import com.scheduler.time.Week;
 
 import java.util.*;
@@ -147,56 +146,57 @@ public class Schedule {
 
 
 
-    public void addWeekAssignmentOn(Assistant assistant, Week week, ShiftType shiftType)
+    public void addWeekAssignmentOn(Assistant assistant, Week week, WeekShift shift)
             throws InvalidShiftTypeException {
 
-        if (!shiftType.getAllowedAssistantTypes().contains(assistant.getType())) {
+        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
-        }
-
-        if (shiftType.getSpanningPeriod() != ShiftTypePeriod.WEEK) {
-            throw new InvalidShiftTypeException("The shift type does not last a whole week");
         }
 
         for (Day day : week.getDays()) {
-            assign(assistant, day, shiftType);
+            assign(assistant, day, shift);
         }
     }
 
-    public void addWeekendAssignmentOn(Assistant assistant, Week week, ShiftType shiftType)
+    public void addWeekendAssignmentOn(Assistant assistant, Week week, WeekendHolidayShift shift)
             throws InvalidShiftTypeException {
 
-        if (!shiftType.getAllowedAssistantTypes().contains(assistant.getType())) {
+        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
-        }
-
-        if (shiftType.getSpanningPeriod() != ShiftTypePeriod.WEEKEND_HOLIDAY) {
-            throw new InvalidShiftTypeException("The shift type does not last a weekend");
         }
 
         for (Day day : week.getWeekendDays()) {
-            assign(assistant, day, shiftType);
+            assign(assistant, day, shift);
         }
     }
 
 
-    public void addAssignmentOn(Assistant assistant, Day day, ShiftType shiftType)
-            throws InvalidShiftTypeException, AssignWholeWeekendsException, AssignWholeWeeksException {
+    public void addDayAssignmentOn(Assistant assistant, Day day, DayShift shift)
+            throws InvalidShiftTypeException {
 
-        if (!shiftType.getAllowedAssistantTypes().contains(assistant.getType())) {
+        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
-        if (shiftType.getSpanningPeriod() == ShiftTypePeriod.WEEKEND_HOLIDAY && day.isWeekend()) {
+        assign(assistant, day, shift);
+    }
+
+    public void addHolidayAssignmentOn(Assistant assistant, Day day, WeekendHolidayShift shift)
+            throws InvalidShiftTypeException, AssignWholeWeekendsException {
+
+        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
+        }
+
+        if (!day.isHoliday()) {
+            throw new InvalidShiftTypeException("Given day is not a holiday");
+        }
+
+        if (day.isWeekend()) {
             throw new AssignWholeWeekendsException("Cannot assign to single weekend day");
         }
 
-        if (shiftType.getSpanningPeriod() == ShiftTypePeriod.WEEK) {
-            throw new AssignWholeWeeksException("Cannot assign to single week day");
-        }
-
-        assign(assistant, day, shiftType);
-
+        assign(assistant, day, shift);
     }
 
     private void assign(Assistant assistant, Day day, ShiftType shiftType) {
