@@ -7,17 +7,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JuniorAssistantNightWeek extends ShiftType {
+public class JuniorAssistantNightWeek extends WeekShift {
 
     @Override
     public int getRequiredNbAssistants(Day day) {
         return 1;
     }
 
-    @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.WEEK;
-    }
 
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {

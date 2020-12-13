@@ -7,16 +7,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SeniorAssistantEveningWeek extends ShiftType {
+public class SeniorAssistantEveningWeek extends WeekShift {
 
     @Override
     public int getRequiredNbAssistants(Day day) {
         return 1;
-    }
-
-    @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.WEEK;
     }
 
     @Override

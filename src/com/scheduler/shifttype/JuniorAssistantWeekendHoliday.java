@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JuniorAssistantWeekendHoliday extends ShiftType {
+public class JuniorAssistantWeekendHoliday extends WeekendHolidayShift {
     @Override
     public int getRequiredNbAssistants(Day day) {
         if (day.isWeekend() || day.isHoliday()) {
@@ -16,10 +16,6 @@ public class JuniorAssistantWeekendHoliday extends ShiftType {
         return 0;
     }
 
-    @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.WEEKEND_HOLIDAY;
-    }
 
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {

@@ -7,15 +7,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Transport extends ShiftType {
+public class Transport extends WeekendHolidayShift {
     @Override
     public int getRequiredNbAssistants(Day day) {
         return 1;
-    }
-
-    @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.WEEKEND_HOLIDAY;
     }
 
     @Override

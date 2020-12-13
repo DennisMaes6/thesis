@@ -203,4 +203,6 @@ public class Schedule {
         this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)] = shiftType;
     }
 
+
+
 }

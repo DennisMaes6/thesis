@@ -6,17 +6,12 @@ import com.scheduler.time.Day;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class JuniorAssistantEvening extends ShiftType {
+public class JuniorAssistantEvening extends DayShift {
 
     @Override
     public int getRequiredNbAssistants(Day day) {
         if (day.isHoliday() || day.isWeekend()) return 0;
         return 1;
-    }
-
-    @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.DAY;
     }
 
     @Override
