@@ -10,6 +10,7 @@ public class Algorithm {
     }
 
     private Schedule initialSchedule(AlgorithmInput input) {
-        return null;
+        Schedule schedule = new Schedule(input.getAssistants(), input.getWeeks(), input.getShiftTypes());
+        return schedule;
     }
 }

@@ -2,7 +2,6 @@ package com.scheduler.schedule;
 
 import com.scheduler.assistant.Assistant;
 import com.scheduler.exceptions.AssignWholeWeekendsException;
-import com.scheduler.exceptions.AssignWholeWeeksException;
 import com.scheduler.exceptions.InvalidShiftTypeException;
 import com.scheduler.shifttype.*;
 import com.scheduler.time.Day;
@@ -16,9 +15,9 @@ public class Schedule {
     private final List<Week> weeks;
     private final List<Day> days;
     private final List<Assistant> assistants;
-    private final List<ShiftType> shiftTypes;
+    private final Set<ShiftType> shiftTypes;
 
-    public Schedule(List<Week> weeks, List<Assistant> assistants, List<ShiftType> shiftTypes) {
+    public Schedule(List<Assistant> assistants, List<Week> weeks, Set<ShiftType> shiftTypes) {
         this.weeks = weeks;
         this.assistants = assistants;
         this.shiftTypes = shiftTypes;
