@@ -1,7 +1,7 @@
 package com.scheduler.shifttype;
 
 import com.scheduler.assistant.AssistantType;
-import com.scheduler.shifttype.period.ShiftTypePeriod;
+import com.scheduler.time.Day;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -10,7 +10,7 @@ import java.util.Set;
 public class SeniorAssistantEveningWeek extends ShiftType {
 
     @Override
-    public int getRequiredNbAssistants() {
+    public int getRequiredNbAssistants(Day day) {
         return 1;
     }
 
@@ -26,5 +26,10 @@ public class SeniorAssistantEveningWeek extends ShiftType {
                 AssistantType.SA_NEO
             )
         );
+    }
+
+    @Override
+    public ShiftTypeId getId() {
+        return ShiftTypeId.SA_EW;
     }
 }

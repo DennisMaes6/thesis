@@ -1,4 +1,4 @@
-package com.scheduler.shifttype.period;
+package com.scheduler.shifttype;
 
 public enum ShiftTypePeriod {
     WEEK,

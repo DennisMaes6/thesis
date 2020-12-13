@@ -5,7 +5,11 @@ import com.scheduler.schedule.Schedule;
 public class Algorithm {
 
     public Schedule generateSchedule(AlgorithmInput input) {
-        // TODO: implement this.
-        return new Schedule();
+        Schedule initialSchedule = initialSchedule(input);
+        return initialSchedule;
+    }
+
+    private Schedule initialSchedule(AlgorithmInput input) {
+        return null;
     }
 }

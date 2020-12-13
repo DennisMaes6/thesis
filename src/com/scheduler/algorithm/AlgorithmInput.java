@@ -1,16 +1,18 @@
 package com.scheduler.algorithm;
 
-import com.scheduler.day.Day;
+import com.scheduler.time.Day;
 import com.scheduler.assistant.Assistant;
 import com.scheduler.shifttype.ShiftType;
 
 import java.util.List;
+import java.util.Set;
 
 public class AlgorithmInput {
 
-    List<Assistant> assistants;
+    Set<Assistant> assistants;
 
     List<Day> days;
 
-    List<ShiftType> shiftTypes;
+    Set<ShiftType> shiftTypes;
+
 }
