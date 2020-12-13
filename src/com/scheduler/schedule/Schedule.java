@@ -2,6 +2,7 @@ package com.scheduler.schedule;
 
 import com.scheduler.assistant.Assistant;
 import com.scheduler.exceptions.AssignWholeWeekendsException;
+import com.scheduler.exceptions.InvalidDayException;
 import com.scheduler.exceptions.InvalidShiftTypeException;
 import com.scheduler.shifttype.*;
 import com.scheduler.time.Day;
@@ -47,7 +48,6 @@ public class Schedule {
             && completeWeeksMet()
             && freeDaysMet();
     }
-
 
     private boolean freeDaysMet() {
         for (Assistant assistant : this.assistants) {
@@ -146,7 +146,7 @@ public class Schedule {
 
 
     public void addWeekAssignmentOn(Assistant assistant, Week week, WeekShift shift)
-            throws InvalidShiftTypeException {
+            throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
@@ -158,7 +158,7 @@ public class Schedule {
     }
 
     public void addWeekendAssignmentOn(Assistant assistant, Week week, WeekendHolidayShift shift)
-            throws InvalidShiftTypeException {
+            throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
@@ -171,7 +171,7 @@ public class Schedule {
 
 
     public void addDayAssignmentOn(Assistant assistant, Day day, DayShift shift)
-            throws InvalidShiftTypeException {
+            throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
@@ -181,7 +181,7 @@ public class Schedule {
     }
 
     public void addHolidayAssignmentOn(Assistant assistant, Day day, WeekendHolidayShift shift)
-            throws InvalidShiftTypeException, AssignWholeWeekendsException {
+            throws InvalidShiftTypeException, AssignWholeWeekendsException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
@@ -198,10 +198,12 @@ public class Schedule {
         assign(assistant, day, shift);
     }
 
-    private void assign(Assistant assistant, Day day, ShiftType shiftType) {
+    private void assign(Assistant assistant, Day day, ShiftType shiftType) throws InvalidDayException {
+        if (assistant.getFreeDays().contains(day)) {
+            throw new InvalidDayException("Cannot assign on a free day");
+        }
+
         this.schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)] = shiftType;
     }
-
-
 
 }
