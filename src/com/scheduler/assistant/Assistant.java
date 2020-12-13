@@ -6,9 +6,9 @@ import java.util.Set;
 
 public class Assistant {
 
-    private String name;
-    private AssistantType type;
-    private Set<Day> freeDays;
+    private final String name;
+    private final AssistantType type;
+    private final Set<Day> freeDays;
 
 
     public Assistant(String name, AssistantType type, Set<Day> freeDays) {
@@ -23,5 +23,9 @@ public class Assistant {
 
     public Set<Day> getFreeDays() {
         return this.freeDays;
+    }
+
+    public String getName() {
+        return name;
     }
 }

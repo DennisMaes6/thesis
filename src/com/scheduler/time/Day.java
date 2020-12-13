@@ -26,4 +26,8 @@ public class Day {
     public Week getWeek() {
         return week;
     }
+
+    public int getDay0fWeek() {
+        return this.date.getDay();
+    }
 }
