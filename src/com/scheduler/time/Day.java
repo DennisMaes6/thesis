@@ -3,6 +3,7 @@ package com.scheduler.time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 public class Day {
 
@@ -40,5 +41,18 @@ public class Day {
             case 0 -> "Sun";
             default -> throw new IllegalStateException("Unexpected value: " + this.date.getDay());
         };
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Day day = (Day) o;
+        return date.equals(day.date);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date);
     }
 }
