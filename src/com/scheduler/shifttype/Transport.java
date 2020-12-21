@@ -10,7 +10,10 @@ import java.util.Set;
 public class Transport extends WeekendHolidayShift {
     @Override
     public int getRequiredNbAssistants(Day day) {
-        return 1;
+        if (day.isWeekend()) {
+            return 1;
+        }
+        return 0;
     }
 
     @Override

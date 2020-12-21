@@ -12,6 +12,8 @@ import java.util.*;
 
 public class Schedule {
 
+    private final static double FAIRNESS_WEIGHT = 1.0; // maximize this
+    private final static double BALANCE_WEIGHT = -1.0; // minimize this
     private final ShiftType[][] schedule;
     private final List<Week> weeks;
     private final List<Day> days;
@@ -32,9 +34,69 @@ public class Schedule {
         this.schedule = new ShiftType[assistants.size()][days.size()];
     }
 
-    public float score() {
-        // TODO: implement this
-        return 0;
+    // objective function
+    public double score() {
+        return FAIRNESS_WEIGHT * fairnessScore() + BALANCE_WEIGHT * balanceScore();
+    }
+
+    private int balanceScore() {
+        List<Integer> balanceScoresPerAssistant = new ArrayList<>();
+        for (Assistant assistant : this.assistants) {
+            balanceScoresPerAssistant.add(balanceScore(assistant));
+        }
+
+        return Collections.min(balanceScoresPerAssistant);
+    }
+
+    private int balanceScore(Assistant assistant) {
+        List<Integer> idleStreaks = new ArrayList<>();
+        boolean idleStreak = false;
+        int idleStreakCount = 0;
+        for (Day day : this.days) {
+            if (freeOn(assistant, day)) {
+                idleStreak = true;
+                idleStreakCount++;
+            } else if (!freeOn(assistant, day) && idleStreak) {
+                idleStreaks.add(idleStreakCount);
+                idleStreak = false;
+                idleStreakCount = 0;
+            }
+        }
+
+        if (idleStreaks.size() > 0) {
+            return Collections.min(idleStreaks);
+        }
+
+        return this.days.size();
+    }
+
+    private double fairnessScore() {
+        List<Double> fairnessScoresPerShiftType = new ArrayList<>();
+        for (ShiftType shiftType : this.shiftTypes) {
+            List<Double> activeTimes = new ArrayList<>();
+            for (Assistant assistant : this.assistants) {
+                activeTimes.add(
+                    ((double) daysActive(assistant, shiftType)) / ((double) this.days.size() - assistant.getFreeDays().size())
+                );
+            }
+            double max = Collections.max(activeTimes);
+            double min = Collections.min(activeTimes);
+
+            fairnessScoresPerShiftType.add(max - min);
+        }
+
+        return Collections.max(fairnessScoresPerShiftType);
+    }
+
+    private int daysActive(Assistant assistant, ShiftType shiftType) {
+        int result = 0;
+        for (Day day : this.days) {
+            ShiftType assignment = schedule[this.assistants.indexOf(assistant)][this.days.indexOf(day)];
+            if (assignment != null && assignment.getId() == shiftType.getId()) {
+                result++;
+            }
+        }
+        return result;
     }
 
     /**
@@ -211,8 +273,9 @@ public class Schedule {
     }
 
     public String toString() {
-
         StringBuilder result = new StringBuilder();
+
+        result.append(String.format("fairness score: %f, balance score: %d\n\n", fairnessScore(), balanceScore()));
 
         result.append(String.format("%1$15s", ""));
         for (Week week : weeks) {
