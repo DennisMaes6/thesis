@@ -1,5 +1,3 @@
-package main;
-
 import algorithm.Algorithm;
 import algorithm.AlgorithmInput;
 import assistant.Assistant;
@@ -9,7 +7,6 @@ import shifttype.*;
 import time.Day;
 import time.Week;
 
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +14,7 @@ import java.util.Set;
 
 public class Main {
 
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) {
         List<Assistant> assistants = Arrays.asList(
                 new Assistant("#1", AssistantType.JA, new HashSet<>(
                     Arrays.asList(// WEEK 1
