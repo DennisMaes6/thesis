@@ -1,0 +1,31 @@
+package assistant;
+
+import time.Day;
+
+import java.util.Set;
+
+public class Assistant {
+
+    private final String name;
+    private final AssistantType type;
+    private final Set<Day> freeDays;
+
+
+    public Assistant(String name, AssistantType type, Set<Day> freeDays) {
+        this.name = name;
+        this.type = type;
+        this.freeDays = freeDays;
+    }
+
+    public AssistantType getType() {
+        return type;
+    }
+
+    public Set<Day> getFreeDays() {
+        return this.freeDays;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
