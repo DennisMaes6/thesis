@@ -100,7 +100,7 @@ public class Schedule {
             throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for input.assistant");
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
         for (Day day : week.getDays()) {
@@ -112,7 +112,7 @@ public class Schedule {
             throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for input.assistant");
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
         for (Day day : week.getWeekendDays()) {
@@ -125,7 +125,7 @@ public class Schedule {
             throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for input.assistant");
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
         assign(assistant, day, shift);
@@ -135,7 +135,7 @@ public class Schedule {
             throws InvalidShiftTypeException, AssignWholeWeekendsException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for input.assistant");
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
         if (!day.isHoliday()) {
