@@ -1,7 +1,7 @@
-package shifttype;
+package input.shifttype;
 
-import assistant.AssistantType;
-import time.Day;
+import input.assistant.AssistantType;
+import input.time.Day;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -28,6 +28,6 @@ public class JuniorAssistantWeekendHoliday extends WeekendHolidayShift {
 
     @Override
     public ShiftTypeId getId() {
-        return ShiftTypeId.JA_WH;
+        return ShiftTypeId.JAWH;
     }
 }

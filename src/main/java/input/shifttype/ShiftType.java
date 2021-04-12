@@ -1,7 +1,7 @@
-package shifttype;
+package input.shifttype;
 
-import assistant.AssistantType;
-import time.Day;
+import input.assistant.AssistantType;
+import input.time.Day;
 
 import java.util.Set;
 

@@ -1,25 +1,35 @@
-package algorithm;
-
-import assistant.Assistant;
+import input.assistant.Assistant;
 import exceptions.AssignWholeWeekendsException;
 import exceptions.InvalidDayException;
 import exceptions.InvalidShiftTypeException;
-import schedule.Schedule;
-import shifttype.*;
-import time.Day;
-import time.Week;
+import input.InstanceData;
+import input.ModelParameters;
+import input.shifttype.*;
+import input.time.Day;
+import input.time.Week;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Algorithm {
 
-    private final AlgorithmInput input;
+    private final static Set<ShiftType> SHIFT_TYPES = new HashSet<>(
+            Arrays.asList(
+                    new JuniorAssistantEvening(),
+                    new JuniorAssistantNightWeek(),
+                    new JuniorAssistantWeekendHoliday(),
+                    new SeniorAssistantEveningWeek(),
+                    new SeniorAssistantWeekendHoliday(),
+                    new Transport(),
+                    new Call()
+            )
+    );
+    private final InstanceData data;
+    private final ModelParameters parameters;
 
-    public Algorithm(AlgorithmInput input) {
-        this.input = input;
+    public Algorithm(InstanceData data, ModelParameters parameters) {
+        this.data = data;
+        this.parameters = parameters;
     }
 
     public Schedule generateSchedule() {
@@ -27,13 +37,13 @@ public class Algorithm {
     }
 
     private Schedule initialSchedule() {
-        Schedule schedule = new Schedule(input.getAssistants(), input.getWeeks(), input.getShiftTypes());
+        Schedule schedule = new Schedule(data, parameters);
         completeSchedule(schedule);
         return schedule;
     }
 
     private void completeSchedule(Schedule schedule) {
-        for (ShiftType shiftType : input.getShiftTypes()) {
+        for (ShiftType shiftType : SHIFT_TYPES) {
             switch (shiftType.getSpanningPeriod()) {
                 case WEEK -> completeScheduleForWeekShifts(schedule, (WeekShift) shiftType);
                 case DAY -> completeScheduleForDayShifts(schedule, (DayShift) shiftType);
@@ -43,7 +53,7 @@ public class Algorithm {
     }
 
     private void completeScheduleForWeekShifts(Schedule schedule, WeekShift shiftType) {
-        for (Week week : input.getWeeks()) {
+        for (Week week : data.getWeeks()) {
             List<Assistant> invalidAssistants = new ArrayList<>();
             while (schedule.nbAssignmentsOfShiftTypeOn(week.getDays().get(0), shiftType) < shiftType.getRequiredNbAssistants(week.getDays().get(0))) {
                 Assistant assistant = randomAssistantForShiftType(invalidAssistants, shiftType);
@@ -59,25 +69,23 @@ public class Algorithm {
     }
 
     private void completeScheduleForDayShifts(Schedule schedule, DayShift shiftType) {
-        for (Week week : input.getWeeks()) {
-            for (Day day : week.getDays()) {
-                List<Assistant> invalidAssistants = new ArrayList<>();
-                while (schedule.nbAssignmentsOfShiftTypeOn(day, shiftType) < shiftType.getRequiredNbAssistants(day)) {
-                    Assistant assistant = randomAssistantForShiftType(invalidAssistants, shiftType);
-                    try {
-                        schedule.addDayAssignmentOn(assistant, day, shiftType);
-                    } catch (InvalidDayException e) {
-                        invalidAssistants.add(assistant);
-                    } catch (InvalidShiftTypeException e) {
-                        e.printStackTrace();
-                    }
+        for (Day day : data.getDays()) {
+            List<Assistant> invalidAssistants = new ArrayList<>();
+            while (schedule.nbAssignmentsOfShiftTypeOn(day, shiftType) < shiftType.getRequiredNbAssistants(day)) {
+                Assistant assistant = randomAssistantForShiftType(invalidAssistants, shiftType);
+                try {
+                    schedule.addDayAssignmentOn(assistant, day, shiftType);
+                } catch (InvalidDayException e) {
+                    invalidAssistants.add(assistant);
+                } catch (InvalidShiftTypeException e) {
+                    e.printStackTrace();
                 }
             }
         }
     }
 
     private void completeScheduleForWeekendHolidayShifts(Schedule schedule, WeekendHolidayShift shiftType) {
-        for (Week week : input.getWeeks()) {
+        for (Week week : data.getWeeks()) {
             List<Assistant> invalidAssistants = new ArrayList<>();
             while (schedule.nbAssignmentsOfShiftTypeOn(week.getWeekendDays().get(0), shiftType) <
                     shiftType.getRequiredNbAssistants(week.getWeekendDays().get(0))) {
@@ -107,7 +115,7 @@ public class Algorithm {
     }
 
     private Assistant randomAssistantForShiftType(List<Assistant> excludedAssistants, ShiftType shiftType) {
-        List<Assistant> allowedAssistants = input.getAssistants()
+        List<Assistant> allowedAssistants = data.getAssistants()
                 .stream()
                 .filter(assistant -> !excludedAssistants.contains(assistant))
                 .filter(assistant -> shiftType.getAllowedAssistantTypes().contains(assistant.getType()))

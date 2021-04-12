@@ -1,4 +1,4 @@
-package shifttype;
+package input.shifttype;
 
 public abstract class WeekendHolidayShift extends ShiftType {
 

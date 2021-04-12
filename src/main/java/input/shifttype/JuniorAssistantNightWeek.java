@@ -1,26 +1,27 @@
-package shifttype;
+package input.shifttype;
 
-import assistant.AssistantType;
-import time.Day;
+import input.assistant.AssistantType;
+import input.time.Day;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
-public class JuniorAssistantEvening extends DayShift {
+public class JuniorAssistantNightWeek extends WeekShift {
 
     @Override
     public int getRequiredNbAssistants(Day day) {
-        if (day.isHoliday() || day.isWeekend()) return 0;
         return 1;
     }
 
+
     @Override
-    public HashSet<AssistantType> getAllowedAssistantTypes() {
+    public Set<AssistantType> getAllowedAssistantTypes() {
         return new HashSet<>(Collections.singleton(AssistantType.JA));
     }
 
     @Override
     public ShiftTypeId getId() {
-        return ShiftTypeId.JA_E;
+        return ShiftTypeId.JANW;
     }
 }

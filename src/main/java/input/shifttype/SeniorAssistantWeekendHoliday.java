@@ -1,7 +1,7 @@
-package shifttype;
+package input.shifttype;
 
-import assistant.AssistantType;
-import time.Day;
+import input.assistant.AssistantType;
+import input.time.Day;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -21,14 +21,14 @@ public class SeniorAssistantWeekendHoliday extends WeekendHolidayShift {
         return new HashSet<>(Arrays.asList(
                 AssistantType.SA,
                 AssistantType.SA_F,
-                AssistantType.SA_N,
-                AssistantType.SA_F_N
+                AssistantType.SA_NEO,
+                AssistantType.SA_F_NEO
             )
         );
     }
 
     @Override
     public ShiftTypeId getId() {
-        return ShiftTypeId.SA_WH;
+        return ShiftTypeId.SAWH;
     }
 }

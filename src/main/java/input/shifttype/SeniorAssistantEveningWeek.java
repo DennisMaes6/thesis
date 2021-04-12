@@ -1,13 +1,13 @@
-package shifttype;
+package input.shifttype;
 
-import assistant.AssistantType;
-import time.Day;
+import input.assistant.AssistantType;
+import input.time.Day;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Call extends WeekShift {
+public class SeniorAssistantEveningWeek extends WeekShift {
 
     @Override
     public int getRequiredNbAssistants(Day day) {
@@ -15,23 +15,16 @@ public class Call extends WeekShift {
     }
 
     @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.WEEK;
-    }
-
-    @Override
     public Set<AssistantType> getAllowedAssistantTypes() {
         return new HashSet<>(Arrays.asList(
                 AssistantType.SA,
-                AssistantType.SA_F,
-                AssistantType.SA_N,
-                AssistantType.SA_F_N
+                AssistantType.SA_NEO
             )
         );
     }
 
     @Override
     public ShiftTypeId getId() {
-        return ShiftTypeId.C;
+        return ShiftTypeId.SAEW;
     }
 }

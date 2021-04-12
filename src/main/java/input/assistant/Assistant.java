@@ -1,17 +1,19 @@
-package assistant;
+package input.assistant;
 
-import time.Day;
+import input.time.Day;
 
 import java.util.Set;
 
 public class Assistant {
 
+    private final int id;
     private final String name;
     private final AssistantType type;
     private final Set<Day> freeDays;
 
 
-    public Assistant(String name, AssistantType type, Set<Day> freeDays) {
+    public Assistant(int id, String name, AssistantType type, Set<Day> freeDays) {
+        this.id = id;
         this.name = name;
         this.type = type;
         this.freeDays = freeDays;

@@ -1,28 +1,22 @@
-package time;
+package input.time;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Week {
 
-    private final int weekNumber;
     private final List<Day> days;
 
-    public Week(int weekNumber, List<Day> days) {
-        this.weekNumber = weekNumber;
+    public Week(List<Day> days) {
         this.days = days;
     }
 
-    public int getWeekNumber() {
-        return weekNumber;
-    }
-
     public List<Day> getDays() {
-        return days;
+        return this.days;
     }
 
     public List<Day> getWeekendDays() {
-        return this.days.stream().filter(Day::isWeekend).collect(Collectors.toList());
+        return this.days.subList(1, 2);
     }
 
     public List<Day> getHolidays() {

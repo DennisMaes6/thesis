@@ -1,4 +1,4 @@
-package shifttype;
+package input.shifttype;
 
 public enum ShiftTypePeriod {
     WEEK,

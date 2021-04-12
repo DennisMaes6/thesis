@@ -1,4 +1,4 @@
-package shifttype;
+package input.shifttype;
 
 public abstract class DayShift extends ShiftType {
 
