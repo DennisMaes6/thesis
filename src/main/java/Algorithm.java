@@ -67,22 +67,6 @@ public class Algorithm {
         }
     }
 
-    private void completeScheduleForDayShifts(Schedule schedule, DayShift shiftType) {
-        for (Day day : data.getDays()) {
-            List<Assistant> invalidAssistants = new ArrayList<>();
-            while (schedule.nbAssignmentsOfShiftTypeOn(day, shiftType) < shiftType.getRequiredNbAssistants(day)) {
-                Assistant assistant = randomAssistantForShiftType(invalidAssistants, shiftType);
-                try {
-                    schedule.addDayAssignmentOn(assistant, day, shiftType);
-                } catch (InvalidDayException e) {
-                    invalidAssistants.add(assistant);
-                } catch (InvalidShiftTypeException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
     private void completeScheduleForWeekendHolidayShifts(Schedule schedule, WeekendHolidayShift shiftType) {
         for (Week week : data.getWeeks()) {
             List<Assistant> invalidAssistants = new ArrayList<>();
