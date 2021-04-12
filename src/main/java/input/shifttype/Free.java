@@ -32,4 +32,10 @@ public class Free extends ShiftType {
     public ShiftTypeId getId() {
         return ShiftTypeId.FREE;
     }
+
+    @Override
+    public String toString() {
+        return "-";
+    }
+
 }

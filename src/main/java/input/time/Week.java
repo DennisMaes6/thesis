@@ -7,8 +7,15 @@ public class Week {
 
     private final List<Day> days;
 
-    public Week(List<Day> days) {
+    public int getWeekNumber() {
+        return weekNumber;
+    }
+
+    private final int weekNumber;
+
+    public Week(List<Day> days, int weekNumber) {
         this.days = days;
+        this.weekNumber = weekNumber;
     }
 
     public List<Day> getDays() {
@@ -16,7 +23,7 @@ public class Week {
     }
 
     public List<Day> getWeekendDays() {
-        return this.days.subList(1, 2);
+        return this.days.subList(1, 3);
     }
 
     public List<Day> getHolidays() {

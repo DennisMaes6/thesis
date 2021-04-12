@@ -15,7 +15,6 @@ public class Schedule {
 
     private final InstanceData data;
     private final Map<ShiftTypeId, Double> shiftTypeWorkload = new HashMap<>();
-
     private final ShiftType[][] schedule;
 
     public Schedule(InstanceData data, ModelParameters parameters) {
@@ -24,6 +23,11 @@ public class Schedule {
             shiftTypeWorkload.put(stps.getShiftType(), stps.getWorkload());
         }
         this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
+        for (int i = 0; i < getNbAssistants(); i++) {
+            for (int j = 0; j < getNbDays(); j ++) {
+                schedule[i][j] = new Free();
+            }
+        }
     }
 
     public double fairnessScore() {
@@ -40,7 +44,7 @@ public class Schedule {
     }
 
     private int daysActive(int assistantIndex) {
-        return getNbDays() - data.getAssistants().get(assistantIndex).getFreeDays().size();
+        return getNbDays() - data.getAssistants().get(assistantIndex).getFreeDayIds().size();
     }
 
     private double getWorkload(ShiftType st) {
@@ -143,7 +147,7 @@ public class Schedule {
     }
 
     private void assign(Assistant assistant, Day day, ShiftType shiftType) throws InvalidDayException {
-        if (assistant.getFreeDays().contains(day)) {
+        if (assistant.getFreeDayIds().contains(day.getId())) {
             throw new InvalidDayException("Cannot assign on a free day");
         }
 
@@ -166,5 +170,44 @@ public class Schedule {
             }
         }
         return count;
+    }
+
+    public String toString() {
+
+        StringBuilder result = new StringBuilder();
+
+        result.append(String.format("%1$20s", ""));
+        for (Week week : data.getWeeks()) {
+            result.append(String.format("%1$-68s", "WEEK " + week.getWeekNumber()));
+        }
+        result.append("\n");
+        result.append(String.format("%1$20s", ""));
+
+        for (Week week : data.getWeeks()) {
+            for (Day day : week.getDays()) {
+                result.append(String.format("%1$-9s", day.getDay0fWeek()));
+            }
+            result.append(String.format("%1$5s", ""));
+        }
+        result.append("\n\n");
+
+        for (Assistant assistant : data.getAssistants()) {
+            result.append(String.format("%1$-8s", assistant.getName()));
+            result.append("  ");
+            result.append(String.format("%1$-10s", assistant.getType().toString()));
+            for (Week week : data.getWeeks()) {
+                for (Day day : week.getDays())
+                    result.append(String.format("%1$-9s", assignmentOn(assistant, day).toString()));
+                result.append(String.format("%1$5s", ""));
+            }
+            result.append("\n");
+        }
+        return result.toString();
+    }
+
+    private ShiftType assignmentOn(Assistant assistant, Day day) {
+        int assistantIndex = data.getAssistants().indexOf(assistant);
+        int dayIndex = data.getDays().indexOf(day);
+        return schedule[assistantIndex][dayIndex];
     }
 }

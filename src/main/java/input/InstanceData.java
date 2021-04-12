@@ -17,7 +17,7 @@ public class InstanceData {
         this.assistants = assistants;
         this.days = days;
         for (int i = 0; i < days.size() / 7; i++) {
-            weeks.add(new Week(days.subList(7*i, 7*(i+1))));
+            weeks.add(new Week(days.subList(7*i, 7*(i+1)), i));
         }
     }
 
@@ -33,6 +33,4 @@ public class InstanceData {
     public List<Week> getWeeks() {
         return this.weeks;
     }
-
-
 }

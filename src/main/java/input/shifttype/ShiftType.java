@@ -13,4 +13,8 @@ public abstract class ShiftType {
     public abstract Set<AssistantType> getAllowedAssistantTypes();
 
     public abstract ShiftTypeId getId();
+
+    public String toString() {
+        return getId().toString();
+    }
 }

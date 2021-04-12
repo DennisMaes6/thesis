@@ -13,12 +13,29 @@ public class Day {
         this.isHoliday = isHoliday;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public boolean isWeekend() {
         return this.id % 7 == 2 || this.id % 7 == 3;
     }
 
     public boolean isHoliday() {
         return this.isHoliday;
+    }
+
+    public String getDay0fWeek() {
+        return switch (this.id % 7) {
+            case 1 -> "Fri";
+            case 2 -> "Sat";
+            case 3 -> "Sun";
+            case 4 -> "Mon";
+            case 5 -> "Tue";
+            case 6 -> "Wed";
+            case 0 -> "Thu";
+            default -> ""; // unreachable
+        };
     }
 
     @Override
