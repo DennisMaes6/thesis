@@ -1,22 +1,15 @@
-import input.InstanceData;
-import input.ModelParameters;
-import input.assistant.Assistant;
-import input.time.Day;
+import exceptions.DbControllerException;
 
-import java.util.*;
+import java.sql.SQLException;
 
 public class Main {
 
-    public static void main(String[] args) {
-        List<Assistant> assistants = new ArrayList<>();
+    public static void main(String[] args) throws SQLException, DbControllerException {
 
-        List<Day> days = new ArrayList<>();
+        String dbPath = System.getProperty("user.home") + "/scheduler/backend/sqlite-database-new.db";
+        DbController controller = new DbController(dbPath);
 
-        ModelParameters parameters = new ModelParameters(0, 0, new ArrayList<>());
-
-        InstanceData input = new InstanceData(assistants, days);
-        Algorithm algorithm = new Algorithm(input, parameters);
-
+        Algorithm algorithm = new Algorithm(controller.getInstanceData(), controller.getModelParameters());
         Schedule schedule = algorithm.generateSchedule();
 
         System.out.println(schedule.toString());

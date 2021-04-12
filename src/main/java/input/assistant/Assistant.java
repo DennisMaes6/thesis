@@ -1,7 +1,5 @@
 package input.assistant;
 
-import input.time.Day;
-
 import java.util.Set;
 
 public class Assistant {
@@ -9,22 +7,22 @@ public class Assistant {
     private final int id;
     private final String name;
     private final AssistantType type;
-    private final Set<Day> freeDays;
+    private final Set<Integer> freeDayIds;
 
 
-    public Assistant(int id, String name, AssistantType type, Set<Day> freeDays) {
+    public Assistant(int id, String name, AssistantType type, Set<Integer> freeDayIds) {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.freeDays = freeDays;
+        this.freeDayIds = freeDayIds;
     }
 
     public AssistantType getType() {
         return type;
     }
 
-    public Set<Day> getFreeDays() {
-        return this.freeDays;
+    public Set<Integer> getFreeDayIds() {
+        return this.freeDayIds;
     }
 
     public String getName() {
