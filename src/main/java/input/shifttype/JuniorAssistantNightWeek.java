@@ -9,6 +9,10 @@ import java.util.Set;
 
 public class JuniorAssistantNightWeek extends WeekShift {
 
+    private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
+            Collections.singleton(AssistantType.JA)
+    );
+
     @Override
     public int getRequiredNbAssistants(Day day) {
         return 1;
@@ -17,7 +21,7 @@ public class JuniorAssistantNightWeek extends WeekShift {
 
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {
-        return new HashSet<>(Collections.singleton(AssistantType.JA));
+        return ALLOWED_ASSISTANT_TYPES;
     }
 
     @Override

@@ -9,6 +9,13 @@ import java.util.Set;
 
 public class SeniorAssistantEveningWeek extends WeekShift {
 
+    private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
+            Arrays.asList(
+                    AssistantType.SA,
+                    AssistantType.SA_NEO
+            )
+    );
+
     @Override
     public int getRequiredNbAssistants(Day day) {
         return 1;
@@ -16,11 +23,7 @@ public class SeniorAssistantEveningWeek extends WeekShift {
 
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {
-        return new HashSet<>(Arrays.asList(
-                AssistantType.SA,
-                AssistantType.SA_NEO
-            )
-        );
+        return ALLOWED_ASSISTANT_TYPES;
     }
 
     @Override
