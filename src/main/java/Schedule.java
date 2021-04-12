@@ -20,7 +20,7 @@ public class Schedule {
     public Schedule(InstanceData data, ModelParameters parameters) {
         this.data = data;
         for (ShiftTypeModelParameters stps : parameters.getShiftTypeModelParameters()) {
-            shiftTypeWorkload.put(stps.getShiftType(), stps.getWorkload());
+            shiftTypeWorkload.put(stps.getShiftTypeId(), stps.getWorkload());
         }
         this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
         for (int i = 0; i < getNbAssistants(); i++) {
@@ -34,10 +34,10 @@ public class Schedule {
         List<Double> workloadPerAssistant = new ArrayList<>();
         for (int i = 0; i < getNbAssistants(); i++) {
             double workload = 0.0;
-            for (int j = 0; j < getNbDays(); j++) {
+            for (int j = 1; j < getNbDays(); j += 7) {
                 workload += getWorkload(schedule[i][j]);
             }
-            workloadPerAssistant.add(workload / (getNbDays() - daysActive(i)));
+            workloadPerAssistant.add(workload / daysActive(i));
         }
 
         return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant);
@@ -48,6 +48,9 @@ public class Schedule {
     }
 
     private double getWorkload(ShiftType st) {
+        if (st.getId() == ShiftTypeId.FREE) {
+            return 0;
+        }
         return shiftTypeWorkload.get(st.getId());
     }
 
@@ -63,18 +66,18 @@ public class Schedule {
         List<Integer> idleStreaks = new ArrayList<>();
         for (int i = 0; i < getNbAssistants(); i++) {
             boolean idleStreak = false;
-            int idleStreakCount = 0;
+            int startDay = 0;
             boolean afterFirst = false;
             for (int j = 0; j < getNbDays(); j++) {
                 if (afterFirst) {
                     if (!idleStreak && !partOfBalance(schedule[i][j])) {
                         idleStreak = true;
-                        idleStreakCount++;
+                        startDay = j;
                     }
 
                     if (idleStreak && partOfBalance(schedule[i][j])) {
-                        idleStreaks.add(idleStreakCount);
-                        idleStreakCount = 0;
+                        idleStreaks.add(j - startDay);
+                        startDay = 0;
                         idleStreak = false;
                     }
                 }
@@ -89,7 +92,7 @@ public class Schedule {
     }
 
     private boolean partOfBalance(ShiftType st) {
-        return st.getId() != ShiftTypeId.FREE && st.getId() != ShiftTypeId.JAEV;
+        return st.getId() != ShiftTypeId.FREE;
     }
 
 

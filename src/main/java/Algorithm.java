@@ -15,7 +15,6 @@ public class Algorithm {
 
     private final static Set<ShiftType> SHIFT_TYPES = new HashSet<>(
             Arrays.asList(
-                    new JuniorAssistantEvening(),
                     new JuniorAssistantNightWeek(),
                     new JuniorAssistantWeekendHoliday(),
                     new SeniorAssistantEveningWeek(),
@@ -24,6 +23,7 @@ public class Algorithm {
                     new Call()
             )
     );
+
     private final InstanceData data;
     private final ModelParameters parameters;
 
@@ -46,7 +46,6 @@ public class Algorithm {
         for (ShiftType shiftType : SHIFT_TYPES) {
             switch (shiftType.getSpanningPeriod()) {
                 case WEEK -> completeScheduleForWeekShifts(schedule, (WeekShift) shiftType);
-                case DAY -> completeScheduleForDayShifts(schedule, (DayShift) shiftType);
                 case WEEKEND_HOLIDAY -> completeScheduleForWeekendHolidayShifts(schedule, (WeekendHolidayShift) shiftType);
             }
         }

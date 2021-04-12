@@ -13,7 +13,7 @@ public class ShiftTypeModelParameters {
         this.maxBuffer = maxBuffer;
     }
 
-    public ShiftTypeId getShiftType() {
+    public ShiftTypeId getShiftTypeId() {
         return shiftType;
     }
 
