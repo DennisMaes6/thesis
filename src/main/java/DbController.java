@@ -4,7 +4,7 @@ import input.ModelParameters;
 import input.ShiftTypeModelParameters;
 import input.assistant.Assistant;
 import input.assistant.AssistantType;
-import input.shifttype.ShiftTypeId;
+import input.shifttype.ShiftType;
 import input.time.Day;
 
 import java.sql.Connection;
@@ -47,7 +47,7 @@ public class DbController {
         List<ShiftTypeModelParameters> result = new ArrayList<>();
         while (rs.next()) {
             ShiftTypeModelParameters stmp = new ShiftTypeModelParameters(
-                    ShiftTypeId.valueOf(rs.getString("shift_type")),
+                    ShiftType.valueOf(rs.getString("shift_type")),
                     rs.getFloat("shift_workload"),
                     rs.getInt("max_buffer")
 

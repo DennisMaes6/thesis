@@ -13,8 +13,12 @@ public class JuniorAssistantNightWeek extends WeekShift {
             Collections.singleton(AssistantType.JA)
     );
 
+    public JuniorAssistantNightWeek(double workload) {
+        super(workload);
+    }
+
     @Override
-    public int getRequiredNbAssistants(Day day) {
+    public int getCoverage(Day day) {
         return 1;
     }
 
@@ -25,7 +29,7 @@ public class JuniorAssistantNightWeek extends WeekShift {
     }
 
     @Override
-    public ShiftTypeId getId() {
-        return ShiftTypeId.JANW;
+    public ShiftType getType() {
+        return ShiftType.JANW;
     }
 }

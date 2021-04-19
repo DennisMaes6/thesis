@@ -1,20 +1,14 @@
 package input.shifttype;
 
-import input.assistant.AssistantType;
-import input.time.Day;
-
-import java.util.Set;
-
-public abstract class ShiftType {
-    public abstract int getRequiredNbAssistants(Day day);
-
-    public abstract ShiftTypePeriod getSpanningPeriod();
-
-    public abstract Set<AssistantType> getAllowedAssistantTypes();
-
-    public abstract ShiftTypeId getId();
-
-    public String toString() {
-        return getId().toString();
-    }
+public enum ShiftType {
+    JANW,
+    JAWE,
+    JAHO,
+    SAEW,
+    SAWE,
+    SAHO,
+    TPWE,
+    TPHO,
+    CALL,
+    FREE
 }

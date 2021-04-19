@@ -7,29 +7,25 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Call extends WeekShift {
+public class TransportWeekend extends WeekendShift {
 
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
             Arrays.asList(
-                    AssistantType.SA,
-                    AssistantType.SA_F,
                     AssistantType.SA_NEO,
                     AssistantType.SA_F_NEO
             )
     );
 
-    public Call(double workload) {
+    public TransportWeekend(double workload) {
         super(workload);
     }
 
-    @Override
-    public int getCoverage(Day day) {
-        return 1;
-    }
 
     @Override
-    public ShiftPeriod getPeriod() {
-        return ShiftPeriod.WEEK;
+    public int getCoverage(Day day) {
+        if (day.isWeekend())
+            return 1;
+        return 0;
     }
 
     @Override
@@ -39,6 +35,6 @@ public class Call extends WeekShift {
 
     @Override
     public ShiftType getType() {
-        return ShiftType.CALL;
+        return ShiftType.TPWE;
     }
 }

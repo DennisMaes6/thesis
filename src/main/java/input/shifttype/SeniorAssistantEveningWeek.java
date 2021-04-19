@@ -16,8 +16,12 @@ public class SeniorAssistantEveningWeek extends WeekShift {
             )
     );
 
+    public SeniorAssistantEveningWeek(double workload) {
+        super(workload);
+    }
+
     @Override
-    public int getRequiredNbAssistants(Day day) {
+    public int getCoverage(Day day) {
         return 1;
     }
 
@@ -27,7 +31,7 @@ public class SeniorAssistantEveningWeek extends WeekShift {
     }
 
     @Override
-    public ShiftTypeId getId() {
-        return ShiftTypeId.SAEW;
+    public ShiftType getType() {
+        return ShiftType.SAEW;
     }
 }

@@ -7,20 +7,25 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Free extends ShiftType {
+public class JuniorAssistantWeekend extends WeekendShift {
 
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
-            Arrays.asList(AssistantType.values())
+            Arrays.asList(
+                    AssistantType.JA,
+                    AssistantType.JA_F
+            )
     );
 
-    @Override
-    public int getRequiredNbAssistants(Day day) {
-        return 0;
+    public JuniorAssistantWeekend(double workload) {
+        super(workload);
     }
 
+
     @Override
-    public ShiftTypePeriod getSpanningPeriod() {
-        return ShiftTypePeriod.DAY;
+    public int getCoverage(Day day) {
+        if (day.isWeekend())
+            return 2;
+        return 0;
     }
 
     @Override
@@ -29,13 +34,7 @@ public class Free extends ShiftType {
     }
 
     @Override
-    public ShiftTypeId getId() {
-        return ShiftTypeId.FREE;
+    public ShiftType getType() {
+        return ShiftType.JAWE;
     }
-
-    @Override
-    public String toString() {
-        return "-";
-    }
-
 }

@@ -1,19 +1,19 @@
 package input;
 
-import input.shifttype.ShiftTypeId;
+import input.shifttype.ShiftType;
 
 public class ShiftTypeModelParameters {
-    private final ShiftTypeId shiftType;
+    private final ShiftType shiftType;
     private final double workload;
     private final int maxBuffer;
 
-    public ShiftTypeModelParameters(ShiftTypeId shiftType, float workload, int maxBuffer) {
+    public ShiftTypeModelParameters(ShiftType shiftType, float workload, int maxBuffer) {
         this.shiftType = shiftType;
         this.workload = workload;
         this.maxBuffer = maxBuffer;
     }
 
-    public ShiftTypeId getShiftTypeId() {
+    public ShiftType getShiftType() {
         return shiftType;
     }
 

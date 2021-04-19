@@ -1,4 +1,5 @@
 import input.assistant.Assistant;
+import input.shifttype.Shift;
 import input.shifttype.ShiftType;
 import input.time.Day;
 

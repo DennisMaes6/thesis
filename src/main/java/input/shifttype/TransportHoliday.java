@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Transport extends WeekendHolidayShift {
+public class TransportHoliday extends HolidayShift {
 
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
             Arrays.asList(
@@ -16,10 +16,14 @@ public class Transport extends WeekendHolidayShift {
             )
     );
 
+    public TransportHoliday(double workload) {
+        super(workload);
+    }
+
 
     @Override
-    public int getRequiredNbAssistants(Day day) {
-        if (day.isWeekend())
+    public int getCoverage(Day day) {
+        if (day.isHoliday())
             return 1;
         return 0;
     }
@@ -30,7 +34,7 @@ public class Transport extends WeekendHolidayShift {
     }
 
     @Override
-    public ShiftTypeId getId() {
-        return ShiftTypeId.TSPT;
+    public ShiftType getType() {
+        return ShiftType.TPHO;
     }
 }
