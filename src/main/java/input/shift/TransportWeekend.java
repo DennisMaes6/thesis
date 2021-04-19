@@ -1,4 +1,4 @@
-package input.shifttype;
+package input.shift;
 
 import input.assistant.AssistantType;
 import input.time.Day;

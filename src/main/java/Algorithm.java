@@ -3,10 +3,10 @@ import exceptions.InvalidShiftTypeException;
 import input.InstanceData;
 import input.ModelParameters;
 import input.assistant.Assistant;
-import input.shifttype.HolidayShift;
-import input.shifttype.Shift;
-import input.shifttype.WeekShift;
-import input.shifttype.WeekendShift;
+import input.shift.HolidayShift;
+import input.shift.Shift;
+import input.shift.WeekShift;
+import input.shift.WeekendShift;
 import input.time.Day;
 import input.time.Week;
 

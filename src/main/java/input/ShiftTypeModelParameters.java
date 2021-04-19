@@ -1,6 +1,6 @@
 package input;
 
-import input.shifttype.ShiftType;
+import input.shift.ShiftType;
 
 public class ShiftTypeModelParameters {
     private final ShiftType shiftType;

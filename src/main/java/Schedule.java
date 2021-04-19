@@ -1,18 +1,17 @@
 import input.InstanceData;
 import input.ShiftTypeModelParameters;
 import input.assistant.Assistant;
-import exceptions.AssignWholeWeekendsException;
 import exceptions.InvalidDayException;
 import exceptions.InvalidShiftTypeException;
 import input.ModelParameters;
-import input.shifttype.*;
+import input.shift.*;
 import input.time.Day;
 import input.time.Week;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static input.shifttype.ShiftType.*;
+import static input.shift.ShiftType.*;
 
 public class Schedule {
 

@@ -4,7 +4,7 @@ import input.ModelParameters;
 import input.ShiftTypeModelParameters;
 import input.assistant.Assistant;
 import input.assistant.AssistantType;
-import input.shifttype.ShiftType;
+import input.shift.ShiftType;
 import input.time.Day;
 
 import java.sql.Connection;

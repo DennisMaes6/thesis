@@ -1,4 +1,4 @@
-package input.shifttype;
+package input.shift;
 
 import input.assistant.AssistantType;
 import input.time.Day;
@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SeniorAssistantHoliday extends HolidayShift {
+public class SeniorAssistantWeekend extends WeekendShift {
 
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
             Arrays.asList(
@@ -18,13 +18,13 @@ public class SeniorAssistantHoliday extends HolidayShift {
             )
     );
 
-    public SeniorAssistantHoliday(double workload) {
+    public SeniorAssistantWeekend(double workload) {
         super(workload);
     }
 
     @Override
     public int getCoverage(Day day) {
-        if (day.isHoliday())
+        if (day.isWeekend())
             return 2;
         return 0;
     }
@@ -36,6 +36,6 @@ public class SeniorAssistantHoliday extends HolidayShift {
 
     @Override
     public ShiftType getType() {
-        return ShiftType.SAHO;
+        return ShiftType.SAWE;
     }
 }

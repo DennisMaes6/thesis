@@ -1,6 +1,5 @@
 import input.assistant.Assistant;
-import input.shifttype.Shift;
-import input.shifttype.ShiftType;
+import input.shift.ShiftType;
 import input.time.Day;
 
 import java.util.List;
