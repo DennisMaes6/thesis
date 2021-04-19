@@ -12,8 +12,10 @@ public class Main {
         Algorithm algorithm = new Algorithm(controller.getInstanceData(), controller.getModelParameters());
         Schedule schedule = algorithm.generateSchedule();
 
-        System.out.println(schedule.fairnessScore());
-        System.out.println(schedule.balanceScore());
+        System.out.println("fairness: " + schedule.fairnessScore());
+        System.out.println("balance: " + schedule.balanceScore());
         System.out.println(schedule.toString());
+
+        controller.putSchedule(schedule);
     }
 }

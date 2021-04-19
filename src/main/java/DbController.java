@@ -7,10 +7,7 @@ import input.assistant.AssistantType;
 import input.shift.ShiftType;
 import input.time.Day;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
 public class DbController {
@@ -90,5 +87,57 @@ public class DbController {
         while(st.hasMoreTokens())
             result.add(Integer.parseInt(st.nextToken().trim()));
         return result;
+    }
+
+    public void putSchedule(Schedule schedule) throws SQLException {
+        putScores(schedule);
+        putIndividualSchedules(schedule);
+        putAssignments(schedule);
+    }
+
+    private void putScores(Schedule schedule) throws SQLException {
+        String deleteSql = "DELETE FROM schedule";
+        this.conn.createStatement().execute(deleteSql);
+
+        String sql = "INSERT OR REPLACE INTO schedule(id, fairness_score, balance_score, " +
+                "jaev_fairness_score, jaev_balance_score) " +
+                "VALUES(1, ?, ?, ?, ?)";
+
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+        pstmt.setDouble(1, schedule.fairnessScore());
+        pstmt.setInt(2, schedule.balanceScore());
+        pstmt.setDouble(3, 0.0); // TODO
+        pstmt.setInt(4, 1); // TODO
+        pstmt.execute();
+    }
+
+    private void putIndividualSchedules(Schedule schedule) throws SQLException {
+        String deleteSql = "DELETE FROM individual_schedule";
+        this.conn.createStatement().execute(deleteSql);
+
+        String sql = "INSERT INTO individual_schedule(assistant_id, workload) VALUES (?, ?)";
+        for (Assistant assistant : schedule.getData().getAssistants()) {
+            PreparedStatement pstmt = this.conn.prepareStatement(sql);
+            pstmt.setInt(1, assistant.getId());
+            pstmt.setDouble(2, schedule.workloadForAssistant(assistant));
+            pstmt.execute();
+        }
+
+    }
+
+    private void putAssignments(Schedule schedule) throws SQLException {
+        String deleteSql = "DELETE FROM assignment";
+        this.conn.createStatement().execute(deleteSql);
+
+        String sql = "INSERT INTO assignment(assistant_id, day_nb, shift_type) VALUES (?, ?, ?)";
+        for (Assistant assistant : schedule.getData().getAssistants()) {
+            for (Day day : schedule.getData().getDays()) {
+                PreparedStatement pstmt = this.conn.prepareStatement(sql);
+                pstmt.setInt(1, assistant.getId());
+                pstmt.setInt(2, day.getId());
+                pstmt.setString(3, schedule.assignmentOn(assistant, day).toString());
+                pstmt.execute();
+            }
+        }
     }
 }

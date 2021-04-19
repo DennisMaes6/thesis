@@ -44,27 +44,17 @@ public class Schedule {
     private void initializeShifts(List<ShiftTypeModelParameters> stps) {
         for (ShiftTypeModelParameters stp : stps) {
             switch (stp.getShiftType()) {
-                case JANW:
-                    this.shifts.put(JANW, new JuniorAssistantNightWeek(stp.getWorkload()));
-                case JAWE:
-                    this.shifts.put(JAWE, new JuniorAssistantWeekend(stp.getWorkload()));
-                case JAHO:
-                    this.shifts.put(JAHO, new JuniorAssistantHoliday(stp.getWorkload()));
-                case SAEW:
-                    this.shifts.put(SAEW, new SeniorAssistantEveningWeek(stp.getWorkload()));
-                case SAWE:
-                    this.shifts.put(SAWE, new SeniorAssistantWeekend(stp.getWorkload()));
-                case SAHO:
-                    this.shifts.put(SAHO, new SeniorAssistantHoliday(stp.getWorkload()));
-                case TPWE:
-                    this.shifts.put(TPWE, new TransportWeekend(stp.getWorkload()));
-                case TPHO:
-                    this.shifts.put(TPHO, new TransportHoliday(stp.getWorkload()));
-                case CALL:
-                    this.shifts.put(CALL, new Call(stp.getWorkload()));
+                case JANW -> this.shifts.put(JANW, new JuniorAssistantNightWeek(stp.getWorkload()));
+                case JAWE -> this.shifts.put(JAWE, new JuniorAssistantWeekend(stp.getWorkload()));
+                case JAHO -> this.shifts.put(JAHO, new JuniorAssistantHoliday(stp.getWorkload()));
+                case SAEW -> this.shifts.put(SAEW, new SeniorAssistantEveningWeek(stp.getWorkload()));
+                case SAWE -> this.shifts.put(SAWE, new SeniorAssistantWeekend(stp.getWorkload()));
+                case SAHO -> this.shifts.put(SAHO, new SeniorAssistantHoliday(stp.getWorkload()));
+                case TPWE -> this.shifts.put(TPWE, new TransportWeekend(stp.getWorkload()));
+                case TPHO -> this.shifts.put(TPHO, new TransportHoliday(stp.getWorkload()));
+                case CALL -> this.shifts.put(CALL, new Call(stp.getWorkload()));
             }
         }
-
         initMaxAssignments(stps);
     }
 
@@ -84,29 +74,34 @@ public class Schedule {
         return shifts;
     }
 
+    public InstanceData getData() {
+        return data;
+    }
+
     // optimization objective
     public double fairnessScore() {
         List<Double> workloadPerAssistant = new ArrayList<>();
-        for (int i = 0; i < getNbAssistants(); i++) {
-            double workload = 0.0;
-            for (int j = 1; j < getNbDays(); j += 7) {
-                workload += workload(schedule[i][j]);
-            }
-            workloadPerAssistant.add(workload / daysActive(i));
+        for (Assistant assistant : data.getAssistants()) {
+            workloadPerAssistant.add(workloadForAssistant(assistant));
         }
+        return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant);
+    }
 
-        return workloadPerAssistant.stream().map(w -> w * w).reduce(0.0, Double::sum);
+    public double workloadForAssistant(Assistant assistant) {
+        return Arrays.stream(schedule[assistant.getIndex()])
+                .map(this::workload)
+                .reduce(0.0, Double::sum) / daysActive(assistant);
     }
 
     private double workload(ShiftType shiftType) {
         if (shiftType == FREE)
             return 0.0;
         else
-            return shifts.get(shiftType).getWorkload();
+            return shifts.get(shiftType).getDailyWorkload();
     }
 
-    private int daysActive(int assistantIndex) {
-        return getNbDays() - data.getAssistants().get(assistantIndex).getFreeDayIds().size();
+    private int daysActive(Assistant assistant) {
+        return getNbDays() - assistant.getFreeDayIds().size();
     }
 
     private int getNbAssistants() {
@@ -159,9 +154,9 @@ public class Schedule {
     private int nbFreeDaysBefore(Assistant assistant, Day day) {
         int count = 0;
         for (int j = day.getIndex()-1; j >= 0; j--) {
-            if (schedule[assistant.getIndex()][day.getIndex()] == FREE)
+            if (schedule[assistant.getIndex()][j] == FREE) {
                 count++;
-            else {
+            } else {
                 return count;
             }
         }
@@ -171,9 +166,9 @@ public class Schedule {
     private int nbFreeDaysAfter(Assistant assistant, Day day) {
         int count = 0;
         for (int j = day.getIndex()+1; j < getNbDays(); j++) {
-            if (schedule[assistant.getIndex()][day.getIndex()] == FREE)
+            if (schedule[assistant.getIndex()][j] == FREE) {
                 count++;
-            else {
+            } else {
                 return count;
             }
         }
@@ -219,7 +214,7 @@ public class Schedule {
         return count;
     }
 
-    private ShiftType assignmentOn(Assistant assistant, Day day) {
+    public ShiftType assignmentOn(Assistant assistant, Day day) {
         return schedule[assistant.getIndex()][day.getIndex()];
     }
 
@@ -290,8 +285,6 @@ public class Schedule {
         } catch (InvalidDayException e) {
             throw new RuntimeException("cannot undo assignments");
         }
-
-
         return fairness;
     }
 

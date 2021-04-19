@@ -37,4 +37,8 @@ public class Assistant {
     public int getIndex() {
         return this.index;
     }
+
+    public int getId() {
+        return id;
+    }
 }

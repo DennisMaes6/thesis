@@ -7,15 +7,15 @@ import java.util.Set;
 
 public abstract class Shift {
 
-    private final double workload;
+    private final double dailyWorkload;
     private int maxAssignments;
 
-    Shift(double workload) {
-        this.workload= workload;
+    Shift(double dailyWorkload) {
+        this.dailyWorkload = dailyWorkload;
     }
 
-    public double getWorkload() {
-        return this.workload;
+    public double getDailyWorkload() {
+        return this.dailyWorkload;
     }
 
     public int getMaxAssignments() {

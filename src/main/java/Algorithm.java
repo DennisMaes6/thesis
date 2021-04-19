@@ -37,26 +37,19 @@ public class Algorithm {
             for (Week week : data.getWeeks()) {
                 for (Shift shift : schedule.getShifts().values()) {
                     switch (shift.getPeriod()) {
-                        case WEEK:
-                            assert shift instanceof WeekShift;
-                            changedList.add(
+                        case WEEK -> changedList.add(
                                     performBestSwap(schedule, schedule.getWeekSwaps(week, (WeekShift) shift))
                             );
-                            break;
-                        case WEEKEND:
-                            assert shift instanceof WeekendShift;
+                        case WEEKEND ->
                             changedList.add(
                                     performBestSwap(schedule, schedule.getWeekendSwaps(week, (WeekendShift) shift))
                             );
-                            break;
-                        case HOLIDAY:
-                            for (Day day : week.getHolidays()) {
-                                assert shift instanceof HolidayShift;
+                        case HOLIDAY -> {
+                            for (Day day : week.getHolidays())
                                 changedList.add(
                                         performBestSwap(schedule, schedule.getHolidaySwaps(day, (HolidayShift) shift))
                                 );
-                            }
-                            break;
+                        }
                     }
                 }
             }
@@ -99,17 +92,12 @@ public class Algorithm {
         for (Week week : data.getWeeks()) {
             for (Shift shift : schedule.getShifts().values()) {
                 switch (shift.getPeriod()) {
-                    case WEEK:
-                        completeScheduleFor(schedule, week.getDays(), shift);
-                        break;
-                    case WEEKEND:
-                        completeScheduleFor(schedule, week.getWeekendDays(), shift);
-                        break;
-                    case HOLIDAY:
-                        for (Day day : week.getHolidays()) {
-                            completeScheduleFor(schedule, Collections.singletonList(day), shift);
-                        }
-                        break;
+                    case WEEK -> completeScheduleFor(schedule, week.getDays(), shift);
+                    case WEEKEND -> completeScheduleFor(schedule, week.getWeekendDays(), shift);
+                    case HOLIDAY -> {
+                        for (Day day : week.getHolidays())
+                                completeScheduleFor(schedule, Collections.singletonList(day), shift);
+                    }
                 }
             }
         }
