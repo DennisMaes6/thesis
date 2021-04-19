@@ -3,10 +3,7 @@ import exceptions.InvalidShiftTypeException;
 import input.InstanceData;
 import input.ModelParameters;
 import input.assistant.Assistant;
-import input.shift.HolidayShift;
-import input.shift.Shift;
-import input.shift.WeekShift;
-import input.shift.WeekendShift;
+import input.shift.*;
 import input.time.Day;
 import input.time.Week;
 
@@ -45,11 +42,13 @@ public class Algorithm {
                             changedList.add(
                                     performBestSwap(schedule, schedule.getWeekSwaps(week, (WeekShift) shift))
                             );
+                            break;
                         case WEEKEND:
                             assert shift instanceof WeekendShift;
                             changedList.add(
                                     performBestSwap(schedule, schedule.getWeekendSwaps(week, (WeekendShift) shift))
                             );
+                            break;
                         case HOLIDAY:
                             for (Day day : week.getHolidays()) {
                                 assert shift instanceof HolidayShift;
@@ -57,6 +56,7 @@ public class Algorithm {
                                         performBestSwap(schedule, schedule.getHolidaySwaps(day, (HolidayShift) shift))
                                 );
                             }
+                            break;
                     }
                 }
             }
@@ -101,12 +101,15 @@ public class Algorithm {
                 switch (shift.getPeriod()) {
                     case WEEK:
                         completeScheduleFor(schedule, week.getDays(), shift);
+                        break;
                     case WEEKEND:
                         completeScheduleFor(schedule, week.getWeekendDays(), shift);
+                        break;
                     case HOLIDAY:
                         for (Day day : week.getHolidays()) {
                             completeScheduleFor(schedule, Collections.singletonList(day), shift);
                         }
+                        break;
                 }
             }
         }
