@@ -8,6 +8,7 @@ public class Assistant {
     private final String name;
     private final AssistantType type;
     private final Set<Integer> freeDayIds;
+    private int index;
 
 
     public Assistant(int id, String name, AssistantType type, Set<Integer> freeDayIds) {
@@ -27,5 +28,13 @@ public class Assistant {
 
     public String getName() {
         return name;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public int getIndex() {
+        return this.index;
     }
 }

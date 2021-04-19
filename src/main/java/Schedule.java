@@ -10,26 +10,36 @@ import input.time.Day;
 import input.time.Week;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Schedule {
 
     private final InstanceData data;
+    private final ModelParameters parameters;
     private final Map<ShiftTypeId, Double> shiftTypeWorkload = new HashMap<>();
     private final ShiftType[][] schedule;
 
     public Schedule(InstanceData data, ModelParameters parameters) {
         this.data = data;
+        this.parameters = parameters;
         for (ShiftTypeModelParameters stps : parameters.getShiftTypeModelParameters()) {
             shiftTypeWorkload.put(stps.getShiftTypeId(), stps.getWorkload());
         }
         this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
+
+        for (int j = 0; j < getNbDays(); j ++) {
+            data.getDays().get(j).setIndex(j);
+        }
+
         for (int i = 0; i < getNbAssistants(); i++) {
+            data.getAssistants().get(i).setIndex(i);
             for (int j = 0; j < getNbDays(); j ++) {
                 schedule[i][j] = new Free();
             }
         }
     }
 
+    // optimization objective
     public double fairnessScore() {
         List<Double> workloadPerAssistant = new ArrayList<>();
         for (int i = 0; i < getNbAssistants(); i++) {
@@ -40,7 +50,7 @@ public class Schedule {
             workloadPerAssistant.add(workload / daysActive(i));
         }
 
-        return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant);
+        return workloadPerAssistant.stream().map(w -> w * w).reduce(0.0, Double::sum);
     }
 
     private int daysActive(int assistantIndex) {
@@ -103,9 +113,7 @@ public class Schedule {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
-        for (Day day : week.getDays()) {
-            assign(assistant, day, shift);
-        }
+        assign(assistant, week.getDays(), shift);
     }
 
     public void addWeekendAssignmentOn(Assistant assistant, Week week, WeekendHolidayShift shift)
@@ -115,20 +123,8 @@ public class Schedule {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
-        for (Day day : week.getWeekendDays()) {
-            assign(assistant, day, shift);
-        }
-    }
+        assign(assistant, week.getWeekendDays(), shift);
 
-
-    public void addDayAssignmentOn(Assistant assistant, Day day, DayShift shift)
-            throws InvalidShiftTypeException, InvalidDayException {
-
-        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
-        }
-
-        assign(assistant, day, shift);
     }
 
     public void addHolidayAssignmentOn(Assistant assistant, Day day, WeekendHolidayShift shift)
@@ -146,34 +142,134 @@ public class Schedule {
             throw new AssignWholeWeekendsException("Cannot assign to single weekend day");
         }
 
-        assign(assistant, day, shift);
+        assign(assistant, Collections.singletonList(day), shift);
     }
 
-    private void assign(Assistant assistant, Day day, ShiftType shiftType) throws InvalidDayException {
-        if (assistant.getFreeDayIds().contains(day.getId())) {
-            throw new InvalidDayException("Cannot assign on a free day");
+    private int nbFreeDaysBefore(Assistant assistant, Day day) {
+        int count = 0;
+        for (int j = day.getIndex()-1; j >= 0; j--) {
+            if (schedule[assistant.getIndex()][day.getIndex()].getId() == ShiftTypeId.FREE)
+                count++;
+            else {
+                return count;
+            }
+        }
+        return getNbDays(); // if no assignment before this one
+    }
+
+    private int nbFreeDaysAfter(Assistant assistant, Day day) {
+        int count = 0;
+        for (int j = day.getIndex()+1; j < getNbDays(); j++) {
+            if (schedule[assistant.getIndex()][day.getIndex()].getId() == ShiftTypeId.FREE)
+                count++;
+            else {
+                return count;
+            }
+        }
+        return getNbDays(); // if no assignment after this one
+    }
+
+    private void assign(Assistant assistant, List<Day> days, ShiftType shiftType) throws InvalidDayException {
+
+        // Hard constraint checks (not complete!)
+        for (Day day : days) {
+            if (assistant.getFreeDayIds().contains(day.getId())) {
+                throw new InvalidDayException("Cannot assign on a free day");
+            }
+            if (schedule[assistant.getIndex()][day.getIndex()].getId() != ShiftTypeId.FREE) {
+                throw new InvalidDayException("A shift was already assigned for this assistant on this day");
+            }
         }
 
-        int assistantIndex = data.getAssistants().indexOf(assistant);
-        int dayIndex = data.getDays().indexOf(day);
-
-        if (schedule[assistantIndex][dayIndex].getId() != ShiftTypeId.FREE) {
-            throw new InvalidDayException("A shift was already assigned for this assistant on this day");
+        if (nbFreeDaysBefore(assistant, days.get(0)) < parameters.getMinBalance()) {
+            throw new InvalidDayException("Assignment violates min balance");
         }
 
-        this.schedule[assistantIndex][dayIndex] = shiftType;
+        if (nbFreeDaysAfter(assistant, days.get(days.size()-1)) < parameters.getMinBalance()) {
+            throw new InvalidDayException("Assignment violates min balance");
+        }
+
+        for (Day day : days)
+            this.schedule[assistant.getIndex()][day.getIndex()] = shiftType;
+    }
+
+    private void clear(Assistant a, List<Day> days) {
+        for (Day day : days)
+            this.schedule[a.getIndex()][day.getIndex()] = new Free();
     }
 
     public int nbAssignmentsOfShiftTypeOn(Day day, ShiftType shiftType) {
-        int dayIndex = data.getDays().indexOf(day);
         int count = 0;
         for (int i = 0; i < getNbAssistants(); i++) {
-            if (schedule[i][dayIndex].getId() == shiftType.getId()) {
+            if (schedule[i][day.getIndex()].getId() == shiftType.getId()) {
                 count++;
             }
         }
         return count;
     }
+
+    private ShiftType assignmentOn(Assistant assistant, Day day) {
+        return schedule[assistant.getIndex()][day.getIndex()];
+    }
+
+
+    public List<Swap> getSwaps(Week week, WeekShift st) {
+        List<Assistant> allowedAssistants = data.getAssistants()
+                    .stream()
+                    .filter(a -> st.getAllowedAssistantTypes().contains(a.getType()))
+                    .collect(Collectors.toList());
+
+        List<Swap> candidateSwaps = new ArrayList<>();
+        for (Assistant assistant : allowedAssistants) {
+            // find assignment of given shift type
+            if (assignmentOn(assistant, week.getDays().get(0)).getId() == st.getId()) {
+                // find all other assistants that are free that week
+                List<Assistant> otherAssistants = allowedAssistants.stream()
+                        .filter(a -> !a.equals(assistant)
+                                && week.getDays().stream()
+                                        .allMatch(d -> assignmentOn(a, d).getId() == ShiftTypeId.FREE)
+                        )
+                        .collect(Collectors.toList());
+                // add new swaps
+                for (Assistant other : otherAssistants) {
+                    try {
+                        double fairness = computeNewFairness(assistant, other, week.getDays(), st);
+                        candidateSwaps.add(new Swap(assistant, other, week.getDays(), st, fairness));
+                    } catch (InvalidDayException ignore) {
+                        // assignment failed -> swap is invalid
+                    }
+                }
+
+            }
+        }
+
+
+        return candidateSwaps;
+    }
+
+    private double computeNewFairness(Assistant from, Assistant to, List<Day> days, ShiftType st)
+            throws InvalidDayException {
+        clear(from, days);
+        assign(to, days, st);
+        double fairness = fairnessScore();
+
+        // undo assignments
+        clear(to, days);
+        try {
+            assign(from, days, st);
+        } catch (InvalidDayException e) {
+            throw new RuntimeException("cannot undo assignments");
+        }
+
+
+        return fairness;
+    }
+
+    public void performSwap(Swap bestSwap) throws InvalidDayException {
+        clear(bestSwap.getFrom(), bestSwap.getDays());
+        assign(bestSwap.getTo(), bestSwap.getDays(), bestSwap.getShiftType());
+    }
+
 
     public String toString() {
 
@@ -208,9 +304,4 @@ public class Schedule {
         return result.toString();
     }
 
-    private ShiftType assignmentOn(Assistant assistant, Day day) {
-        int assistantIndex = data.getAssistants().indexOf(assistant);
-        int dayIndex = data.getDays().indexOf(day);
-        return schedule[assistantIndex][dayIndex];
-    }
 }

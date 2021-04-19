@@ -6,6 +6,7 @@ public class Day {
 
     private final int id;
     private final boolean isHoliday;
+    private int index;
 
     public Day(int id, boolean isHoliday) {
 
@@ -15,6 +16,14 @@ public class Day {
 
     public int getId() {
         return id;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 
     public boolean isWeekend() {
