@@ -81,6 +81,10 @@ public class Schedule {
         }
     }
 
+    public Map<ShiftType, Shift> getShifts() {
+        return shifts;
+    }
+
     // optimization objective
     public double fairnessScore() {
         List<Double> workloadPerAssistant = new ArrayList<>();
@@ -143,43 +147,14 @@ public class Schedule {
         return Collections.min(idleStreaks);
     }
 
-    public void addWeekAssignmentOn(Assistant assistant, Week week, WeekShift shift)
+    public void addAssignmentOn(Assistant assistant, List<Day> days, Shift shift)
             throws InvalidShiftTypeException, InvalidDayException {
 
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
 
-        assign(assistant, week.getDays(), shift);
-    }
-
-    public void addWeekendAssignmentOn(Assistant assistant, Week week, WeekendShift shift)
-            throws InvalidShiftTypeException, InvalidDayException {
-
-        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
-        }
-
-        assign(assistant, week.getWeekendDays(), shift);
-
-    }
-
-    public void addHolidayAssignmentOn(Assistant assistant, Day day, WeekendShift shift)
-            throws InvalidShiftTypeException, AssignWholeWeekendsException, InvalidDayException {
-
-        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
-        }
-
-        if (!day.isHoliday()) {
-            throw new InvalidShiftTypeException("Given day is not a holiday");
-        }
-
-        if (day.isWeekend()) {
-            throw new AssignWholeWeekendsException("Cannot assign to single weekend day");
-        }
-
-        assign(assistant, Collections.singletonList(day), shift);
+        assign(assistant, days, shift);
     }
 
     private int nbFreeDaysBefore(Assistant assistant, Day day) {
@@ -235,10 +210,10 @@ public class Schedule {
             this.schedule[a.getIndex()][day.getIndex()] = FREE;
     }
 
-    public int nbAssignmentsOfShiftTypeOn(Day day, Shift shift) {
+    public int nbAssignmentsOfShiftTypeOn(Day day, ShiftType st) {
         int count = 0;
         for (int i = 0; i < getNbAssistants(); i++) {
-            if (schedule[i][day.getIndex()] == shift.getType()) {
+            if (schedule[i][day.getIndex()] == st) {
                 count++;
             }
         }
