@@ -129,15 +129,16 @@ public class DbController {
         String deleteSql = "DELETE FROM assignment";
         this.conn.createStatement().execute(deleteSql);
 
-        String sql = "INSERT INTO assignment(assistant_id, day_nb, shift_type) VALUES (?, ?, ?)";
         for (Assistant assistant : schedule.getData().getAssistants()) {
+            String sql = "INSERT INTO assignment(assistant_id, day_nb, shift_type) VALUES (?, ?, ?)";
+            PreparedStatement pstmt = this.conn.prepareStatement(sql);
             for (Day day : schedule.getData().getDays()) {
-                PreparedStatement pstmt = this.conn.prepareStatement(sql);
                 pstmt.setInt(1, assistant.getId());
                 pstmt.setInt(2, day.getId());
                 pstmt.setString(3, schedule.assignmentOn(assistant, day).toString());
-                pstmt.execute();
+                pstmt.addBatch();
             }
+            pstmt.executeBatch();
         }
     }
 }
