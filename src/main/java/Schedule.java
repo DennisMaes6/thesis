@@ -196,16 +196,6 @@ public class Schedule {
 
     }
 
-    public void addAssignmentOn(Assistant assistant, List<Day> days, Shift shift)
-            throws InvalidShiftTypeException, InvalidDayException {
-
-        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
-            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
-        }
-
-        assign(assistant, days, shift);
-    }
-
     private int nbFreeDaysBefore(Assistant assistant, Day day) {
         int count = 0;
         for (int j = day.getIndex()-1; j >= 0; j--) {
@@ -230,9 +220,12 @@ public class Schedule {
         return getNbDays(); // if no assignment after this one
     }
 
-    private void assign(Assistant assistant, List<Day> days, Shift shift) throws InvalidDayException {
+    public void assign(Assistant assistant, List<Day> days, Shift shift) throws InvalidDayException, InvalidShiftTypeException {
+        
+        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
+        }
 
-        // Hard constraint checks (not complete!)
         for (Day day : days) {
             if (assistant.getFreeDayIds().contains(day.getId())) {
                 throw new InvalidDayException("Cannot assign on a free day");
@@ -242,7 +235,7 @@ public class Schedule {
             }
         }
 
-        // respect min balance
+        // respect min balance + no consecutive assignments
         if (nbFreeDaysBefore(assistant, days.get(0)) < parameters.getMinBalance()) {
             throw new InvalidDayException("Assignment violates min balance");
         }
@@ -250,9 +243,54 @@ public class Schedule {
         if (nbFreeDaysAfter(assistant, days.get(days.size()-1)) < parameters.getMinBalance()) {
             throw new InvalidDayException("Assignment violates min balance");
         }
+        
+        if (nbAssignmentsOfShiftType(assistant, shift) >= shift.getMaxAssignments()) {
+            throw new InvalidShiftTypeException("Assignment violates max assignments");
+        }
 
         for (Day day : days)
             this.schedule[assistant.getIndex()][day.getIndex()] = shift.getType();
+    }
+
+    private int nbAssignmentsOfShiftType(Assistant assistant, Shift shift) {
+        return switch(shift.getPeriod()) {
+            case WEEK -> nbWeekAssignments(assistant, (WeekShift) shift);
+            case WEEKEND -> nbWeekendAssignments(assistant, (WeekendShift) shift);
+            case HOLIDAY -> nbHolidayAssignments(assistant, (HolidayShift) shift);
+            default -> throw new IllegalStateException("Unexpected value: " + shift.getPeriod());
+        };
+    }
+
+    private int nbWeekAssignments(Assistant assistant, WeekShift shift) {
+        int result = 0;
+        for (Week week : data.getWeeks()) {
+            if (assignmentOn(assistant, week.getDays().get(0)) == shift.getType()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    private int nbWeekendAssignments(Assistant assistant, WeekendShift shift) {
+        int result = 0;
+        for (Week week : data.getWeeks()) {
+            if (assignmentOn(assistant, week.getWeekendDays().get(0)) == shift.getType()) {
+                result++;
+            }
+        }
+        return result;
+    }
+
+    private int nbHolidayAssignments(Assistant assistant, HolidayShift shift) {
+        int result = 0;
+        for (Week week : data.getWeeks()) {
+            for (Day day : week.getHolidays()) {
+                if (assignmentOn(assistant, day) == shift.getType()) {
+                    result++;
+                }
+            }
+        }
+        return result;
     }
 
     private void clear(Assistant a, List<Day> days) {
@@ -304,7 +342,7 @@ public class Schedule {
                     try {
                         double fairness = computeNewFairness(assistant, other, days, st);
                         candidateSwaps.add(new Swap(assistant, other, days, st, fairness));
-                    } catch (InvalidDayException ignore) {
+                    } catch (InvalidDayException | InvalidShiftTypeException ignore) {
                         // assignment failed -> swap is invalid
                     }
                 }
@@ -332,7 +370,7 @@ public class Schedule {
     }
 
     private double computeNewFairness(Assistant from, Assistant to, List<Day> days, ShiftType st)
-            throws InvalidDayException {
+            throws InvalidDayException, InvalidShiftTypeException {
 
         assign(to, days, shifts.get(st));
         clear(from, days);
@@ -348,7 +386,7 @@ public class Schedule {
         return fairness;
     }
 
-    public void performSwap(Swap bestSwap) throws InvalidDayException {
+    public void performSwap(Swap bestSwap) throws InvalidDayException, InvalidShiftTypeException {
         clear(bestSwap.getFrom(), bestSwap.getDays());
         assign(bestSwap.getTo(), bestSwap.getDays(), shifts.get(bestSwap.getShiftType()));
     }
