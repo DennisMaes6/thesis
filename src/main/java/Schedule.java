@@ -19,12 +19,14 @@ public class Schedule {
     private final ModelParameters parameters;
     private final Map<ShiftType, Shift> shifts = new HashMap<>();
     private final ShiftType[][] schedule;
+    private final JuniorAssistantEvening jaevShift;
 
     public Schedule(InstanceData data, ModelParameters parameters) {
         this.data = data;
         this.parameters = parameters;
         initializeShifts(parameters.getShiftTypeModelParameters());
         this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
+        this.jaevShift = new JuniorAssistantEvening();
 
         for (int i = 0; i < getNbAssistants(); i++) {
             data.getAssistants().get(i).setIndex(i);
@@ -87,8 +89,24 @@ public class Schedule {
         return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant);
     }
 
+    double jaevFairnessScore() {
+        List<Double> jaevWorkloadPerAssistant = new ArrayList<>();
+        for (Assistant assistant : getAllowedAssistants(JAEV)) {
+            jaevWorkloadPerAssistant.add(jaevWorkloadForAssistant(assistant));
+        }
+        return Collections.max(jaevWorkloadPerAssistant) - Collections.min(jaevWorkloadPerAssistant);
+    }
+
     public double workloadForAssistant(Assistant assistant) {
         return Arrays.stream(schedule[assistant.getIndex()])
+                .filter(st -> st != JAEV)
+                .map(this::workload)
+                .reduce(0.0, Double::sum) / daysActive(assistant);
+    }
+
+    private double jaevWorkloadForAssistant(Assistant assistant) {
+        return Arrays.stream(schedule[assistant.getIndex()])
+                .filter(st -> st == JAEV)
                 .map(this::workload)
                 .reduce(0.0, Double::sum) / daysActive(assistant);
     }
@@ -96,8 +114,12 @@ public class Schedule {
     private double workload(ShiftType shiftType) {
         if (shiftType == FREE)
             return 0.0;
-        else
+        else {
+            if (shiftType == JAEV) {
+                return this.jaevShift.getDailyWorkload();
+            }
             return shifts.get(shiftType).getDailyWorkload();
+        }
     }
 
     private int daysActive(Assistant assistant) {
@@ -120,25 +142,58 @@ public class Schedule {
             boolean afterFirst = false;
             for (int j = 0; j < getNbDays(); j++) {
                 if (afterFirst) {
-                    if (!idleStreak && schedule[i][j] == FREE) {
+                    if (!idleStreak && (schedule[i][j] == FREE || schedule[i][j] == JAEV)) {
                         idleStreak = true;
                         startDay = j;
                     }
 
-                    if (idleStreak && schedule[i][j] != FREE) {
+                    if (idleStreak && (schedule[i][j] != FREE && schedule[i][j] != JAEV)) {
                         idleStreaks.add(j - startDay);
                         startDay = 0;
                         idleStreak = false;
                     }
                 }
 
-                if (!afterFirst && schedule[i][j] != FREE) {
+                if (!afterFirst && (schedule[i][j] != FREE && schedule[i][j] != JAEV)) {
                     afterFirst = true;
                 }
             }
         }
 
         return Collections.min(idleStreaks);
+    }
+
+    public int jaevBalanceScore() {
+        List<Integer> idleStreaks = new ArrayList<>();
+        for (Assistant assistant : getAllowedAssistants(JAEV)) {
+            boolean idleStreak = false;
+            int startDay = 0;
+            boolean afterFirst = false;
+            for (int j = 0; j < getNbDays(); j++) {
+                if (afterFirst) {
+                    if (!idleStreak && schedule[assistant.getIndex()][j] != JAEV) {
+                        idleStreak = true;
+                        startDay = j;
+                    }
+
+                    if (idleStreak && schedule[assistant.getIndex()][j] == JAEV) {
+                        idleStreaks.add(j - startDay);
+                        startDay = 0;
+                        idleStreak = false;
+                    }
+                }
+
+                if (!afterFirst && schedule[assistant.getIndex()][j] == JAEV) {
+                    afterFirst = true;
+                }
+            }
+        }
+        try {
+            return Collections.min(idleStreaks);
+        } catch (NoSuchElementException e) {
+            return 0;
+        }
+
     }
 
     public void addAssignmentOn(Assistant assistant, List<Day> days, Shift shift)
@@ -187,6 +242,7 @@ public class Schedule {
             }
         }
 
+        // respect min balance
         if (nbFreeDaysBefore(assistant, days.get(0)) < parameters.getMinBalance()) {
             throw new InvalidDayException("Assignment violates min balance");
         }
@@ -259,6 +315,12 @@ public class Schedule {
     }
 
     private List<Assistant> getAllowedAssistants(ShiftType st) {
+        if (st == JAEV) {
+            return data.getAssistants()
+                    .stream()
+                    .filter(a -> this.jaevShift.getAllowedAssistantTypes().contains(a.getType()))
+                    .collect(Collectors.toList());
+        }
         return data.getAssistants()
                 .stream()
                 .filter(a -> shifts.get(st).getAllowedAssistantTypes().contains(a.getType()))
@@ -266,25 +328,23 @@ public class Schedule {
     }
 
     private List<Assistant> getAllowedAssistants(Shift shift) {
-        return data.getAssistants()
-                .stream()
-                .filter(a -> shift.getAllowedAssistantTypes().contains(a.getType()))
-                .collect(Collectors.toList());
+        return getAllowedAssistants(shift.getType());
     }
 
     private double computeNewFairness(Assistant from, Assistant to, List<Day> days, ShiftType st)
             throws InvalidDayException {
-        clear(from, days);
+
         assign(to, days, shifts.get(st));
+        clear(from, days);
         double fairness = fairnessScore();
 
         // undo assignments
-        clear(to, days);
         try {
             assign(from, days, shifts.get(st));
         } catch (InvalidDayException e) {
             throw new RuntimeException("cannot undo assignments");
         }
+        clear(to, days);
         return fairness;
     }
 
@@ -327,4 +387,134 @@ public class Schedule {
         return result.toString();
     }
 
+    public JuniorAssistantEvening getJaevShift() {
+        return this.jaevShift;
+    }
+
+    public void addJaevAssignmentOn(Assistant assistant, Day day) throws InvalidShiftTypeException, InvalidDayException {
+
+        if (!this.jaevShift.getAllowedAssistantTypes().contains(assistant.getType())) {
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
+        }
+
+        assignJaev(assistant, day);
+    }
+
+    private void assignJaev(Assistant assistant, Day day) throws InvalidDayException {
+        if (assistant.getFreeDayIds().contains(day.getId())) {
+            throw new InvalidDayException("Cannot assign on a free day");
+        }
+
+        if (schedule[assistant.getIndex()][day.getIndex()] != FREE) {
+            throw new InvalidDayException("A shift was already assigned for this assistant on this day");
+        }
+
+        if (day.getIndex() - 1 >= 0 && schedule[assistant.getIndex()][day.getIndex()-1] != FREE) {
+            throw new InvalidDayException("Cannot assign one day after other shift");
+        }
+
+        if (day.getIndex() + 1 < getNbDays() && schedule[assistant.getIndex()][day.getIndex()+1] != FREE) {
+            throw new InvalidDayException("Cannot assign one day before other shift");
+        }
+
+        for (int i = 2; i <= 3; i++) {
+            if (day.getIndex() - i >= 0 && isWeekendOrHoliday(schedule[assistant.getIndex()][day.getIndex()-i])) {
+                throw new InvalidDayException("Cannot assign too close after other weekend/holiday shift");
+            }
+
+            if (day.getIndex() + i < getNbDays() && isWeekendOrHoliday(schedule[assistant.getIndex()][day.getIndex()+i])) {
+                throw new InvalidDayException("Cannot assign too close before other weekend/holiday shift");
+            }
+        }
+
+        // respect min balance Jaev
+        if (nbFreeDaysBeforeJaev(assistant, day) < parameters.getMinBalanceJaev()) {
+            throw new InvalidDayException("Assignment violates min balance");
+        }
+
+        if (nbFreeDaysAfterJaev(assistant, day) < parameters.getMinBalanceJaev()) {
+            throw new InvalidDayException("Assignment violates min balance");
+        }
+
+        this.schedule[assistant.getIndex()][day.getIndex()] = this.jaevShift.getType();
+    }
+
+    private int nbFreeDaysBeforeJaev(Assistant assistant, Day day) {
+        int count = 0;
+        for (int j = day.getIndex()-1; j >= 0; j--) {
+            if (schedule[assistant.getIndex()][j] != JAEV) {
+                count++;
+            } else {
+                return count;
+            }
+        }
+        return getNbDays(); // if no assignment before this one
+    }
+
+    private int nbFreeDaysAfterJaev(Assistant assistant, Day day) {
+        int count = 0;
+        for (int j = day.getIndex()+1; j < getNbDays(); j++) {
+            if (schedule[assistant.getIndex()][j] != JAEV) {
+                count++;
+            } else {
+                return count;
+            }
+        }
+        return getNbDays(); // if no assignment after this one
+    }
+
+
+    private boolean isWeekendOrHoliday(ShiftType shiftType){
+        Set<ShiftType> weekendHolidayShiftTypes = this.shifts.values()
+                .stream().filter(s -> s.getPeriod() == ShiftPeriod.WEEKEND || s.getPeriod() == ShiftPeriod.HOLIDAY)
+                .map(Shift::getType)
+                .collect(Collectors.toSet());
+
+        return weekendHolidayShiftTypes.contains(shiftType);
+    }
+
+    public List<JaevSwap> getJaevSwaps(Day day) {
+        List<Assistant> allowedAssistants = getAllowedAssistants(JAEV);
+        List<JaevSwap> candidateSwaps = new ArrayList<>();
+        for (Assistant assistant : allowedAssistants) {
+            // find assignment of given shift type
+            if (assignmentOn(assistant, day) == JAEV) {
+                // find all other assistants that are free that week
+                List<Assistant> otherAssistants = allowedAssistants.stream()
+                        .filter(a -> !a.equals(assistant) && assignmentOn(a, day) == FREE)
+                        .collect(Collectors.toList());
+                // add new swaps
+                for (Assistant other : otherAssistants) {
+                    try {
+                        double fairness = computeNewJaevFairness(assistant, other, day);
+                        candidateSwaps.add(new JaevSwap(assistant, other, day, fairness));
+                    } catch (InvalidDayException ignore) {
+                        // assignment failed -> swap is invalid
+                    }
+                }
+
+            }
+        }
+        return candidateSwaps;
+    }
+
+    private double computeNewJaevFairness(Assistant from, Assistant to, Day day) throws InvalidDayException {
+        assignJaev(to, day);
+        clear(from, Collections.singletonList(day));
+        double jaevFairness = jaevFairnessScore();
+
+        // undo assignments
+        try {
+            assignJaev(from, day);
+        } catch (InvalidDayException e) {
+            throw new RuntimeException("cannot undo assignments");
+        }
+        clear(to, Collections.singletonList(day));
+        return jaevFairness;
+    }
+
+    public void performJaevSwap(JaevSwap bestSwap) throws InvalidDayException {
+        clear(bestSwap.getFrom(), Collections.singletonList(bestSwap.getDay()));
+        assignJaev(bestSwap.getTo(), bestSwap.getDay());
+    }
 }

@@ -27,7 +27,25 @@ public class Algorithm {
     public Schedule generateSchedule() {
         Schedule schedule = initialSchedule();
         optimizeSchedule(schedule);
+        initJaev(schedule);
+        optimizeJaev(schedule);
         return schedule;
+    }
+
+    private void optimizeJaev(Schedule schedule) {
+        boolean changed = true;
+        while (changed) {
+            List<Boolean> changedList = new ArrayList<>();
+            List<Day> weekdays = data.getDays().stream()
+                    .filter(d -> !d.isWeekend() && !d.isHoliday())
+                    .collect(Collectors.toList());
+            for (Day day : weekdays) {
+                changedList.add(
+                        performBestSwapJaev(schedule, schedule.getJaevSwaps(day))
+                );
+            }
+            changed = changedList.contains(true);
+        }
     }
 
     private void optimizeSchedule(Schedule schedule) {
@@ -82,10 +100,50 @@ public class Algorithm {
         return changed;
     }
 
+    private boolean performBestSwapJaev(Schedule schedule, List<JaevSwap> swaps) {
+        boolean changed = false;
+        if (swaps.size() > 0) {
+            double originalFairness = schedule.jaevFairnessScore();
+            JaevSwap bestSwap = null;
+            for (JaevSwap swap : swaps) {
+                if (swap.getJaevFairnessScore() < originalFairness) {
+                    bestSwap = swap;
+                    originalFairness = swap.getJaevFairnessScore();
+                }
+            }
+            if (bestSwap != null) {
+                try {
+                    schedule.performJaevSwap(bestSwap);
+                    System.out.println("jaev swapped");
+                    changed = true;
+                } catch (InvalidDayException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return changed;
+    }
+
     private Schedule initialSchedule() {
         Schedule schedule = new Schedule(data, parameters);
         completeSchedule(schedule);
         return schedule;
+    }
+
+    private void initJaev(Schedule schedule) {
+        for (Day day: data.getDays()) {
+            List<Assistant> invalidAssistants = new ArrayList<>();
+            while (schedule.nbAssignmentsOfShiftTypeOn(day, ShiftType.JAEV) < schedule.getJaevShift().getCoverage(day)) {
+                Assistant assistant = randomAssistantForShift(invalidAssistants, schedule.getJaevShift());
+                try {
+                    schedule.addJaevAssignmentOn(assistant, day);
+                } catch (InvalidDayException e) {
+                    invalidAssistants.add(assistant);
+                } catch (InvalidShiftTypeException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private void completeSchedule(Schedule schedule) {

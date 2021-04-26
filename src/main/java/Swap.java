@@ -40,6 +40,4 @@ public class Swap {
         return fairnessScore;
     }
 
-
-
 }

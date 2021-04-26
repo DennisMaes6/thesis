@@ -106,8 +106,8 @@ public class DbController {
         PreparedStatement pstmt = this.conn.prepareStatement(sql);
         pstmt.setDouble(1, schedule.fairnessScore());
         pstmt.setInt(2, schedule.balanceScore());
-        pstmt.setDouble(3, 0.0); // TODO
-        pstmt.setInt(4, 1); // TODO
+        pstmt.setDouble(3, schedule.jaevFairnessScore());
+        pstmt.setInt(4, schedule.jaevBalanceScore());
         pstmt.execute();
     }
 

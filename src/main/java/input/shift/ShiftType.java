@@ -10,5 +10,6 @@ public enum ShiftType {
     TPWE,
     TPHO,
     CALL,
+    JAEV,
     FREE
 }
