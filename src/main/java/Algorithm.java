@@ -1,5 +1,6 @@
 import exceptions.InvalidDayException;
 import exceptions.InvalidShiftTypeException;
+import exceptions.NoSuitableAssistantException;
 import input.InstanceData;
 import input.ModelParameters;
 import input.assistant.Assistant;
@@ -24,7 +25,7 @@ public class Algorithm {
     }
 
     // run algorithm
-    public Schedule generateSchedule() {
+    public Schedule generateSchedule() throws NoSuitableAssistantException {
         Schedule schedule = initialSchedule();
         optimizeSchedule(schedule);
         initJaev(schedule);
@@ -92,7 +93,7 @@ public class Algorithm {
                     schedule.performSwap(bestSwap);
                     System.out.println("swapped");
                     changed = true;
-                } catch (InvalidDayException e) {
+                } catch (InvalidDayException | InvalidShiftTypeException e) {
                     e.printStackTrace();
                 }
             }
@@ -126,11 +127,20 @@ public class Algorithm {
 
     private Schedule initialSchedule() {
         Schedule schedule = new Schedule(data, parameters);
-        completeSchedule(schedule);
+        boolean done = false;
+        while (!done) {
+            try {
+                completeSchedule(schedule);
+                done = true;
+            } catch (NoSuitableAssistantException e) {
+                System.out.println("Restart init");
+                schedule = new Schedule(data, parameters);
+            }
+        }
         return schedule;
     }
 
-    private void initJaev(Schedule schedule) {
+    private void initJaev(Schedule schedule) throws NoSuitableAssistantException {
         for (Day day: data.getDays()) {
             List<Assistant> invalidAssistants = new ArrayList<>();
             while (schedule.nbAssignmentsOfShiftTypeOn(day, ShiftType.JAEV) < schedule.getJaevShift().getCoverage(day)) {
@@ -146,7 +156,7 @@ public class Algorithm {
         }
     }
 
-    private void completeSchedule(Schedule schedule) {
+    private void completeSchedule(Schedule schedule) throws NoSuitableAssistantException {
         for (Week week : data.getWeeks()) {
             for (Shift shift : schedule.getShifts().values()) {
                 switch (shift.getPeriod()) {
@@ -161,27 +171,29 @@ public class Algorithm {
         }
     }
 
-    private void completeScheduleFor(Schedule schedule, List<Day> days, Shift shift) {
+    private void completeScheduleFor(Schedule schedule, List<Day> days, Shift shift) throws NoSuitableAssistantException {
         List<Assistant> invalidAssistants = new ArrayList<>();
         while (schedule.nbAssignmentsOfShiftTypeOn(days.get(0), shift.getType()) < shift.getCoverage(days.get(0))) {
             Assistant assistant = randomAssistantForShift(invalidAssistants, shift);
             try {
-                schedule.addAssignmentOn(assistant, days, shift);
-            } catch (InvalidDayException e) {
+                schedule.assign(assistant, days, shift);
+            } catch (InvalidDayException | InvalidShiftTypeException e) {
                 invalidAssistants.add(assistant);
-            } catch (InvalidShiftTypeException e) {
-                e.printStackTrace();
             }
         }
     }
 
-    private Assistant randomAssistantForShift(List<Assistant> excludedAssistants, Shift shift) {
+    private Assistant randomAssistantForShift(List<Assistant> excludedAssistants, Shift shift) throws NoSuitableAssistantException {
         List<Assistant> allowedAssistants = data.getAssistants()
                 .stream()
                 .filter(assistant -> !excludedAssistants.contains(assistant))
                 .filter(assistant -> shift.getAllowedAssistantTypes().contains(assistant.getType()))
                 .collect(Collectors.toList());
         Random random = new Random();
+        if (allowedAssistants.size() == 0) {
+            throw new NoSuitableAssistantException("no allowed asssistants left");
+        }
         return allowedAssistants.get(random.nextInt(allowedAssistants.size()));
+
     }
 }

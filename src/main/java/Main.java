@@ -1,10 +1,11 @@
 import exceptions.DbControllerException;
+import exceptions.NoSuitableAssistantException;
 
 import java.sql.SQLException;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException, DbControllerException {
+    public static void main(String[] args) throws SQLException, DbControllerException, NoSuitableAssistantException {
 
         String dbPath = System.getProperty("user.home") + "/scheduler/backend/sqlite-database-new.db";
         DbController controller = new DbController(dbPath);
