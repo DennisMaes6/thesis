@@ -91,7 +91,6 @@ public class Algorithm {
             if (bestSwap != null) {
                 try {
                     schedule.performSwap(bestSwap);
-                    System.out.println("swapped");
                     changed = true;
                 } catch (InvalidDayException | InvalidShiftTypeException e) {
                     e.printStackTrace();
@@ -115,7 +114,6 @@ public class Algorithm {
             if (bestSwap != null) {
                 try {
                     schedule.performJaevSwap(bestSwap);
-                    System.out.println("jaev swapped");
                     changed = true;
                 } catch (InvalidDayException e) {
                     e.printStackTrace();
@@ -133,14 +131,25 @@ public class Algorithm {
                 completeSchedule(schedule);
                 done = true;
             } catch (NoSuitableAssistantException e) {
-                System.out.println("Restart init");
                 schedule = new Schedule(data, parameters);
             }
         }
         return schedule;
     }
 
-    private void initJaev(Schedule schedule) throws NoSuitableAssistantException {
+    private void initJaev(Schedule schedule) {
+        boolean done = false;
+        while (!done) {
+            try {
+                completeJaev(schedule);
+                done = true;
+            } catch (NoSuitableAssistantException e) {
+                schedule = new Schedule(data, parameters);
+            }
+        }
+    }
+
+    private void completeJaev(Schedule schedule) throws NoSuitableAssistantException {
         for (Day day: data.getDays()) {
             List<Assistant> invalidAssistants = new ArrayList<>();
             while (schedule.nbAssignmentsOfShiftTypeOn(day, ShiftType.JAEV) < schedule.getJaevShift().getCoverage(day)) {
