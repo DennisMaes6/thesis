@@ -24,7 +24,7 @@ public class SeniorAssistantHoliday extends HolidayShift {
 
     @Override
     public int getCoverage(Day day) {
-        if (day.isHoliday())
+        if (day.isHoliday() && !day.isWeekend())
             return 2;
         return 0;
     }

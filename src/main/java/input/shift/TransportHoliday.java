@@ -23,7 +23,7 @@ public class TransportHoliday extends HolidayShift {
 
     @Override
     public int getCoverage(Day day) {
-        if (day.isHoliday())
+        if (day.isHoliday() && !day.isWeekend())
             return 1;
         return 0;
     }
