@@ -221,7 +221,7 @@ public class Schedule {
     }
 
     public void assign(Assistant assistant, List<Day> days, Shift shift) throws InvalidDayException, InvalidShiftTypeException {
-        
+        // all hard constraints
         if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
             throw new InvalidShiftTypeException("Shift type not allowed for assistant");
         }
