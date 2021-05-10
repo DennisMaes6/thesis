@@ -1,5 +1,8 @@
 package input.assistant;
 
+import input.time.Day;
+
+import java.util.List;
 import java.util.Set;
 
 public class Assistant {
@@ -40,5 +43,14 @@ public class Assistant {
 
     public int getId() {
         return id;
+    }
+
+    public boolean availableOn(List<Day> days) {
+        for (Day day : days) {
+            if (freeDayIds.contains(day.getId())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

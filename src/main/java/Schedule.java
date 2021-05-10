@@ -1,3 +1,4 @@
+import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ShiftTypeModelParameters;
 import input.assistant.Assistant;
@@ -21,7 +22,7 @@ public class Schedule {
     private final ShiftType[][] schedule;
     private final JuniorAssistantEvening jaevShift;
 
-    public Schedule(InstanceData data, ModelParameters parameters) {
+    public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException {
         this.data = data;
         this.parameters = parameters;
         initializeShifts(parameters.getShiftTypeModelParameters());
@@ -40,6 +41,10 @@ public class Schedule {
             for (int j = 0; j < getNbDays(); j++) {
                 schedule[i][j] = FREE;
             }
+        }
+
+        if (!isSolvable()) {
+            throw new NotSolvableException("not solvable!");
         }
     }
 
@@ -80,6 +85,71 @@ public class Schedule {
         return data;
     }
 
+    public boolean isSolvable() {
+        for (Week week : data.getWeeks()) {
+            Set<Assistant> assistants = data.getAssistants()
+                    .stream()
+                    .filter(a -> a.availableOn(week.getDays()))
+                    .collect(Collectors.toSet());
+
+            for (ShiftType shiftType : List.of(JANW, SAEW, CALL)) {
+                List<Assistant> allowedAssistants = assistants
+                        .stream()
+                        .filter(a -> shifts.get(shiftType).getAllowedAssistantTypes().contains(a.getType()))
+                        .collect(Collectors.toList());
+                if (allowedAssistants.size() < shifts.get(shiftType).getCoverage(week.getDays().get(0))) {
+                    return false;
+                }
+                for (int i = 0; i < shifts.get(shiftType).getCoverage(week.getDays().get(0)); i++) {
+                    assistants.remove(allowedAssistants.get(i));
+                }
+            }
+
+            for (ShiftType shiftType : List.of(JAWE, TPWE, SAWE)) {
+                List<Assistant> allowedAssistants = assistants
+                        .stream()
+                        .filter(a -> shifts.get(shiftType).getAllowedAssistantTypes().contains(a.getType()))
+                        .collect(Collectors.toList());
+                if (allowedAssistants.size() < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0))) {
+                    return false;
+                }
+                for (int i = 0; i < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0)); i++) {
+                    assistants.remove(allowedAssistants.get(i));
+                }
+            }
+
+            for (Day day : week.getHolidays()) {
+                for (ShiftType shiftType : List.of(JAHO, TPHO, SAHO)) {
+                    List<Assistant> allowedAssistants = assistants
+                            .stream()
+                            .filter(a -> shifts.get(shiftType).getAllowedAssistantTypes().contains(a.getType()))
+                            .collect(Collectors.toList());
+                    if (allowedAssistants.size() < shifts.get(shiftType).getCoverage(day)) {
+                        return false;
+                    }
+                    for (int i = 0; i < shifts.get(shiftType).getCoverage(day); i++) {
+                        assistants.remove(allowedAssistants.get(i));
+                    }
+                }
+            }
+
+            for (Day day : week.getDays().stream().filter(d -> ! d.isWeekend() && !d.isHoliday()).collect(Collectors.toList())) {
+                List<Assistant> allowedAssistants = assistants
+                        .stream()
+                        .filter(a -> jaevShift.getAllowedAssistantTypes().contains(a.getType()))
+                        .collect(Collectors.toList());
+                if (allowedAssistants.size() < jaevShift.getCoverage(day)) {
+                    return false;
+                }
+                for (int i = 0; i < jaevShift.getCoverage(day); i++) {
+                    assistants.remove(allowedAssistants.get(i));
+                }
+            }
+        }
+
+        return true;
+    }
+
     // optimization objective
     public double fairnessScore() {
         List<Double> workloadPerAssistant = new ArrayList<>();
@@ -98,6 +168,9 @@ public class Schedule {
     }
 
     public double workloadForAssistant(Assistant assistant) {
+        if (daysActive(assistant) == 0) {
+            return 0;
+        }
         return Arrays.stream(schedule[assistant.getIndex()])
                 .filter(st -> st != JAEV)
                 .map(this::workload)
@@ -105,6 +178,9 @@ public class Schedule {
     }
 
     private double jaevWorkloadForAssistant(Assistant assistant) {
+        if (daysActive(assistant) == 0) {
+            return 0;
+        }
         return Arrays.stream(schedule[assistant.getIndex()])
                 .filter(st -> st == JAEV)
                 .map(this::workload)

@@ -1,6 +1,7 @@
 import exceptions.InvalidDayException;
 import exceptions.InvalidShiftTypeException;
 import exceptions.NoSuitableAssistantException;
+import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ModelParameters;
 import input.assistant.Assistant;
@@ -25,7 +26,7 @@ public class Algorithm {
     }
 
     // run algorithm
-    public Schedule generateSchedule() throws NoSuitableAssistantException {
+    public Schedule generateSchedule() throws NotSolvableException {
         Schedule schedule = initialSchedule();
         optimizeSchedule(schedule);
         initJaev(schedule);
@@ -123,21 +124,28 @@ public class Algorithm {
         return changed;
     }
 
-    private Schedule initialSchedule() {
+    private Schedule initialSchedule() throws NotSolvableException {
         Schedule schedule = new Schedule(data, parameters);
         boolean done = false;
+        int count = 0;
         while (!done) {
             try {
                 completeSchedule(schedule);
                 done = true;
             } catch (NoSuitableAssistantException e) {
+                if (count > 10) {
+                    System.out.println("too many restarts");
+                    throw new NotSolvableException("too many restars");
+                }
+                System.out.println("restart init");
                 schedule = new Schedule(data, parameters);
+                count++;
             }
         }
         return schedule;
     }
 
-    private void initJaev(Schedule schedule) {
+    private void initJaev(Schedule schedule) throws NotSolvableException {
         boolean done = false;
         while (!done) {
             try {
