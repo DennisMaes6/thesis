@@ -116,12 +116,13 @@ public class DbController {
         this.conn.createStatement().execute(deleteSql);
 
         String sql = "INSERT INTO individual_schedule(assistant_id, workload) VALUES (?, ?)";
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
         for (Assistant assistant : schedule.getData().getAssistants()) {
-            PreparedStatement pstmt = this.conn.prepareStatement(sql);
             pstmt.setInt(1, assistant.getId());
             pstmt.setDouble(2, schedule.workloadForAssistant(assistant));
-            pstmt.execute();
+            pstmt.addBatch();
         }
+        pstmt.executeBatch();
 
     }
 
@@ -129,17 +130,17 @@ public class DbController {
         String deleteSql = "DELETE FROM assignment";
         this.conn.createStatement().execute(deleteSql);
 
+        String sql = "INSERT INTO assignment(assistant_id, day_nb, shift_type) VALUES (?, ?, ?)";
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
         for (Assistant assistant : schedule.getData().getAssistants()) {
-            String sql = "INSERT INTO assignment(assistant_id, day_nb, shift_type) VALUES (?, ?, ?)";
-            PreparedStatement pstmt = this.conn.prepareStatement(sql);
             for (Day day : schedule.getData().getDays()) {
                 pstmt.setInt(1, assistant.getId());
                 pstmt.setInt(2, day.getId());
                 pstmt.setString(3, schedule.assignmentOn(assistant, day).toString());
                 pstmt.addBatch();
             }
-            pstmt.executeBatch();
         }
+        pstmt.executeBatch();
     }
 
     public void putInstance(InstanceData data) throws SQLException {
