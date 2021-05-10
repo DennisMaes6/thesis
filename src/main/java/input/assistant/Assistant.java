@@ -53,4 +53,12 @@ public class Assistant {
         }
         return true;
     }
+
+    public String getFreeDaysAsString() {
+        StringBuilder result = new StringBuilder();
+        for (int freeDayId : this.freeDayIds) {
+            result.append(String.format("%d,", freeDayId));
+        }
+        return result.toString();
+    }
 }

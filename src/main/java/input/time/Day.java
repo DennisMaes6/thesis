@@ -7,11 +7,17 @@ public class Day {
     private final int id;
     private final boolean isHoliday;
     private int index;
+    private Date date;
 
     public Day(int id, boolean isHoliday) {
-
         this.id = id;
         this.isHoliday = isHoliday;
+    }
+
+    public Day(int id, boolean isHoliday, Date date) {
+        this.id = id;
+        this.isHoliday = isHoliday;
+        this.date = date;
     }
 
     public int getId() {
@@ -58,5 +64,9 @@ public class Day {
     @Override
     public int hashCode() {
         return Objects.hash(this.id);
+    }
+
+    public Date getDate() {
+        return date;
     }
 }

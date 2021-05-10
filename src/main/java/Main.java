@@ -67,7 +67,7 @@ public class Main {
 
          */
 
-
+/*
 
         String dbPath = System.getProperty("user.home") + "/scheduler/backend/test.db";
         DbController controller = new DbController(dbPath);
@@ -81,7 +81,9 @@ public class Main {
 
         controller.putSchedule(schedule);
 
-
- 
+ */
+        String dbPath = System.getProperty("user.home") + "/scheduler/backend/test.db";
+        DbController controller = new DbController(dbPath);
+        controller.putInstance(InstanceGenerator.generateInstance(26, 50));
     }
 }

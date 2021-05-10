@@ -2,6 +2,7 @@ import input.InstanceData;
 import input.assistant.Assistant;
 import input.assistant.AssistantType;
 import input.time.Day;
+import input.time.Date;
 
 import java.util.*;
 
@@ -15,11 +16,17 @@ public class InstanceGenerator {
     }
 
     static private List<Day> generateDays(int nb_weeks) {
+        Calendar cal = new GregorianCalendar();
+        cal.set(Calendar.YEAR, 2021);
+        cal.set(Calendar.MONTH, 1);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
         List<Day> days = new ArrayList<>();
         Random random = new Random();
         for (int i = 1; i <= 7*nb_weeks; i++) {
+            Date date = new Date(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH), cal.get(Calendar.YEAR));
             int ran = random.nextInt(1000);
-            days.add(new Day(i, ran < 33));
+            days.add(new Day(i, ran < 33, date));
+            cal.roll(Calendar.DATE, true);
         }
         return days;
     }
@@ -34,9 +41,9 @@ public class InstanceGenerator {
             int ran = random.nextInt(100);
             if (ran < 8) {      // pregnancy leave
                 int untilDayNb = days.get( random.nextInt(days.size())).getId();
-                result.add(new Assistant(i, "test", types.get(i), getIntsUpTill(untilDayNb)));
+                result.add(new Assistant(i, String.format("test %d", i), types.get(i), getIntsUpTill(untilDayNb)));
             } else {            // normal leaves
-                result.add(new Assistant(i, "test", types.get(i), getRandomFreeDays(days)));
+                result.add(new Assistant(i, String.format("test %d", i), types.get(i), getRandomFreeDays(days)));
             }
         }
 

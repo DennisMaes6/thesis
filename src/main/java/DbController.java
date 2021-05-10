@@ -141,4 +141,40 @@ public class DbController {
             pstmt.executeBatch();
         }
     }
+
+    public void putInstance(InstanceData data) throws SQLException {
+        this.putDays(data.getDays());
+        this.putAssistants(data.getAssistants());
+    }
+
+    private void putDays(List<Day> days) throws SQLException {
+       String deleteSql = "DELETE FROM day";
+       this.conn.createStatement().execute(deleteSql);
+
+       String sql = "INSERT INTO day(id, date, is_holiday) VALUES (?, ?, ?)";
+       PreparedStatement pstmt = this.conn.prepareStatement(sql);
+       for (Day day : days) {
+           pstmt.setInt(1, day.getId());
+           pstmt.setString(2, day.getDate().toString());
+           pstmt.setBoolean(3, day.isHoliday());
+           pstmt.addBatch();
+       }
+       pstmt.executeBatch();
+    }
+
+    private void putAssistants(List<Assistant> assistants) throws SQLException {
+        String deleteSql = "DELETE FROM assistant";
+        this.conn.createStatement().execute(deleteSql);
+
+        String sql = "INSERT INTO assistant(id, name, type, free_days) VALUES (?, ?, ?, ?)";
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+        for (Assistant assistant : assistants) {
+            pstmt.setInt(1, assistant.getId());
+            pstmt.setString(2, assistant.getName());
+            pstmt.setString(3, assistant.getType().toString());
+            pstmt.setString(4, assistant.getFreeDaysAsString());
+            pstmt.addBatch();
+        }
+        pstmt.executeBatch();
+    }
 }
