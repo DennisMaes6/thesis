@@ -156,7 +156,8 @@ public class Schedule {
         for (Assistant assistant : data.getAssistants()) {
             workloadPerAssistant.add(workloadForAssistant(assistant));
         }
-        return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant);
+        return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant)
+                + 0.001 * workloadPerAssistant.stream().filter(w -> w.equals(Collections.max(workloadPerAssistant))).count();
     }
 
     double jaevFairnessScore() {

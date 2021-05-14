@@ -1,6 +1,7 @@
 import exceptions.DbControllerException;
 import exceptions.NoSuitableAssistantException;
 import exceptions.NotSolvableException;
+import input.InstanceData;
 import input.ModelParameters;
 
 import java.io.FileWriter;
@@ -70,7 +71,11 @@ public class Main {
 
         String dbPath = System.getProperty("user.home") + "/scheduler/backend/test.db";
         DbController controller = new DbController(dbPath);
-        Algorithm algorithm = new Algorithm(controller.getInstanceData(), controller.getModelParameters());
+        InstanceData instance = InstanceGenerator.generateInstance(26, 40);
+        controller.putInstance(instance);
+
+
+        Algorithm algorithm = new Algorithm(instance, controller.getModelParameters());
 
         Schedule schedule = algorithm.generateSchedule();
         System.out.println("fairness: " + schedule.fairnessScore());
@@ -79,11 +84,5 @@ public class Main {
 
 
         controller.putSchedule(schedule);
-
-        /*
-        String dbPath = System.getProperty("user.home") + "/scheduler/backend/test.db";
-        DbController controller = new DbController(dbPath);
-        controller.putInstance(InstanceGenerator.generateInstance(26, 50));
-         */
     }
 }

@@ -17,6 +17,7 @@ public class DbController {
     DbController(String filePath) throws SQLException {
         String connectionString = "jdbc:sqlite:" + filePath;
         this.conn = DriverManager.getConnection(connectionString);
+        conn.setAutoCommit(false);
     }
 
     public InstanceData getInstanceData() throws SQLException {
@@ -93,6 +94,7 @@ public class DbController {
         putScores(schedule);
         putIndividualSchedules(schedule);
         putAssignments(schedule);
+        conn.commit();
     }
 
     private void putScores(Schedule schedule) throws SQLException {
@@ -112,6 +114,7 @@ public class DbController {
     }
 
     private void putIndividualSchedules(Schedule schedule) throws SQLException {
+        schedule.getData().getAssistants().sort(Comparator.comparing(Assistant::getType));
         String deleteSql = "DELETE FROM individual_schedule";
         this.conn.createStatement().execute(deleteSql);
 
@@ -131,6 +134,7 @@ public class DbController {
         this.conn.createStatement().execute(deleteSql);
 
         String sql = "INSERT INTO assignment(assistant_id, day_nb, shift_type) VALUES (?, ?, ?)";
+
         PreparedStatement pstmt = this.conn.prepareStatement(sql);
         for (Assistant assistant : schedule.getData().getAssistants()) {
             for (Day day : schedule.getData().getDays()) {
@@ -146,6 +150,7 @@ public class DbController {
     public void putInstance(InstanceData data) throws SQLException {
         this.putDays(data.getDays());
         this.putAssistants(data.getAssistants());
+        conn.commit();
     }
 
     private void putDays(List<Day> days) throws SQLException {

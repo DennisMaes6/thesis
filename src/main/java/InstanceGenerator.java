@@ -26,7 +26,7 @@ public class InstanceGenerator {
             Date date = new Date(cal.get(Calendar.DAY_OF_MONTH), cal.get(Calendar.MONTH), cal.get(Calendar.YEAR));
             int ran = random.nextInt(1000);
             days.add(new Day(i, ran < 33, date));
-            cal.roll(Calendar.DATE, true);
+            cal.add(Calendar.DATE, 1);
         }
         return days;
     }
@@ -62,7 +62,7 @@ public class InstanceGenerator {
             } else if (ran == days.size()/7 - 1) {
                 result.addAll(List.of(days.size()-1, days.size()-2, days.size()-3, days.size()-4, days.size()-5, days.size()-6));
             } else {
-                int startDay = 7*ran - 6;
+                int startDay = 7*ran - 5;
                 for (int i = 0; i < 9; i++) {
                     result.add(startDay + i);
                 }
