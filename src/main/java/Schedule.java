@@ -1,3 +1,4 @@
+import exceptions.BadInstanceException;
 import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ShiftTypeModelParameters;
@@ -8,6 +9,7 @@ import input.ModelParameters;
 import input.shift.*;
 import input.time.Day;
 import input.time.Week;
+import org.javatuples.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,7 +24,7 @@ public class Schedule {
     private final ShiftType[][] schedule;
     private final JuniorAssistantEvening jaevShift;
 
-    public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException {
+    public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException, BadInstanceException {
         this.data = data;
         this.parameters = parameters;
         initializeShifts(parameters.getShiftTypeModelParameters());
@@ -211,7 +213,7 @@ public class Schedule {
         return data.getDays().size();
     }
 
-    public int balanceScore() {
+    public double balanceScore() {
         List<Integer> idleStreaks = new ArrayList<>();
         for (int i = 0; i < getNbAssistants(); i++) {
             boolean idleStreak = false;
@@ -237,7 +239,7 @@ public class Schedule {
             }
         }
 
-        return Collections.min(idleStreaks);
+        return (Collections.min(idleStreaks) - idleStreaks.stream().filter(b -> b.equals(Collections.min(idleStreaks))).count() / 100.0);
     }
 
     public int jaevBalanceScore() {
@@ -417,8 +419,8 @@ public class Schedule {
                 // add new swaps
                 for (Assistant other : otherAssistants) {
                     try {
-                        double fairness = computeNewFairness(assistant, other, days, st);
-                        candidateSwaps.add(new Swap(assistant, other, days, st, fairness));
+                        Pair<Double, Double> res = computeNewFairness(assistant, other, days, st);
+                        candidateSwaps.add(new Swap(assistant, other, days, st, res.getValue0(), res.getValue1()));
                     } catch (InvalidDayException | InvalidShiftTypeException ignore) {
                         // assignment failed -> swap is invalid
                     }
@@ -446,26 +448,27 @@ public class Schedule {
         return getAllowedAssistants(shift.getType());
     }
 
-    private double computeNewFairness(Assistant from, Assistant to, List<Day> days, ShiftType st)
+    private Pair<Double, Double> computeNewFairness(Assistant from, Assistant to, List<Day> days, ShiftType st)
             throws InvalidDayException, InvalidShiftTypeException {
 
-        assign(to, days, shifts.get(st));
+        assignNoBalance(to, days, shifts.get(st));
         clear(from, days);
         double fairness = fairnessScore();
+        double balance = balanceScore();
 
         // undo assignments
         try {
-            assign(from, days, shifts.get(st));
+            assignNoBalance(from, days, shifts.get(st));
         } catch (InvalidDayException e) {
             throw new RuntimeException("cannot undo assignments");
         }
         clear(to, days);
-        return fairness;
+        return new Pair<>(fairness, balance);
     }
 
     public void performSwap(Swap bestSwap) throws InvalidDayException, InvalidShiftTypeException {
         clear(bestSwap.getFrom(), bestSwap.getDays());
-        assign(bestSwap.getTo(), bestSwap.getDays(), shifts.get(bestSwap.getShiftType()));
+        assignNoBalance(bestSwap.getTo(), bestSwap.getDays(), shifts.get(bestSwap.getShiftType()));
     }
 
 
@@ -631,5 +634,37 @@ public class Schedule {
     public void performJaevSwap(JaevSwap bestSwap) throws InvalidDayException {
         clear(bestSwap.getFrom(), Collections.singletonList(bestSwap.getDay()));
         assignJaev(bestSwap.getTo(), bestSwap.getDay());
+    }
+
+    public void assignNoBalance(Assistant assistant, List<Day> days, Shift shift) throws InvalidDayException, InvalidShiftTypeException {
+        // all hard constraints
+        if (!shift.getAllowedAssistantTypes().contains(assistant.getType())) {
+            throw new InvalidShiftTypeException("Shift type not allowed for assistant");
+        }
+
+        for (Day day : days) {
+            if (assistant.getFreeDayIds().contains(day.getId())) {
+                throw new InvalidDayException("Cannot assign on a free day");
+            }
+            if (schedule[assistant.getIndex()][day.getIndex()] != FREE) {
+                throw new InvalidDayException("A shift was already assigned for this assistant on this day");
+            }
+        }
+
+        // respect min balance + no consecutive assignments
+        if (nbFreeDaysBefore(assistant, days.get(0)) < 1) {
+            throw new InvalidDayException("Assignment violates min balance");
+        }
+
+        if (nbFreeDaysAfter(assistant, days.get(days.size()-1)) < 1) {
+            throw new InvalidDayException("Assignment violates min balance");
+        }
+
+        if (nbAssignmentsOfShiftType(assistant, shift) >= shift.getMaxAssignments()) {
+            throw new InvalidShiftTypeException("Assignment violates max assignments");
+        }
+
+        for (Day day : days)
+            this.schedule[assistant.getIndex()][day.getIndex()] = shift.getType();
     }
 }

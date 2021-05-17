@@ -1,7 +1,4 @@
-import exceptions.InvalidDayException;
-import exceptions.InvalidShiftTypeException;
-import exceptions.NoSuitableAssistantException;
-import exceptions.NotSolvableException;
+import exceptions.*;
 import input.InstanceData;
 import input.ModelParameters;
 import input.assistant.Assistant;
@@ -26,12 +23,63 @@ public class Algorithm {
     }
 
     // run algorithm
-    public Schedule generateSchedule() throws NotSolvableException {
+    public Schedule generateSchedule() throws NotSolvableException, BadInstanceException {
         Schedule schedule = initialSchedule();
+        optimizeBalance(schedule);
         optimizeSchedule(schedule);
         initJaev(schedule);
         optimizeJaev(schedule);
         return schedule;
+    }
+
+    private void optimizeBalance(Schedule schedule) {
+        boolean changed = true;
+        while (changed) {
+            List<Boolean> changedList = new ArrayList<>();
+            for (Week week : data.getWeeks()) {
+                for (Shift shift : schedule.getShifts().values()) {
+                    switch (shift.getPeriod()) {
+                        case WEEK -> changedList.add(
+                                performBestBalanceSwap(schedule, schedule.getWeekSwaps(week, (WeekShift) shift))
+                        );
+                        case WEEKEND ->
+                                changedList.add(
+                                        performBestBalanceSwap(schedule, schedule.getWeekendSwaps(week, (WeekendShift) shift))
+                                );
+                        case HOLIDAY -> {
+                            for (Day day : week.getHolidays())
+                                changedList.add(
+                                        performBestBalanceSwap(schedule, schedule.getHolidaySwaps(day, (HolidayShift) shift))
+                                );
+                        }
+                    }
+                }
+            }
+            changed = changedList.contains(true);
+        }
+    }
+
+    private Boolean performBestBalanceSwap(Schedule schedule, List<Swap> swaps) {
+        boolean changed = false;
+        if (swaps.size() > 0) {
+            double originalBalance = schedule.balanceScore();
+            Swap bestSwap = null;
+            for (Swap swap : swaps) {
+                if (swap.getBalanceScore() > originalBalance) {
+                    bestSwap = swap;
+                    originalBalance = swap.getBalanceScore();
+                }
+            }
+            if (bestSwap != null) {
+                try {
+                    schedule.performSwap(bestSwap);
+                    changed = true;
+                } catch (InvalidDayException | InvalidShiftTypeException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return changed;
     }
 
     private void optimizeJaev(Schedule schedule) {
@@ -124,7 +172,7 @@ public class Algorithm {
         return changed;
     }
 
-    private Schedule initialSchedule() throws NotSolvableException {
+    private Schedule initialSchedule() throws NotSolvableException, BadInstanceException {
         Schedule schedule = new Schedule(data, parameters);
         boolean done = false;
         int count = 0;
@@ -133,11 +181,9 @@ public class Algorithm {
                 completeSchedule(schedule);
                 done = true;
             } catch (NoSuitableAssistantException e) {
-                if (count > 10) {
-                    System.out.println("too many restarts");
-                    throw new NotSolvableException("too many restars");
+                if (count > 10000) {
+                    throw new NotSolvableException("too many restarts");
                 }
-                System.out.println("restart init");
                 schedule = new Schedule(data, parameters);
                 count++;
             }
@@ -145,7 +191,7 @@ public class Algorithm {
         return schedule;
     }
 
-    private void initJaev(Schedule schedule) throws NotSolvableException {
+    private void initJaev(Schedule schedule) throws NotSolvableException, BadInstanceException {
         boolean done = false;
         while (!done) {
             try {
@@ -193,8 +239,9 @@ public class Algorithm {
         while (schedule.nbAssignmentsOfShiftTypeOn(days.get(0), shift.getType()) < shift.getCoverage(days.get(0))) {
             Assistant assistant = randomAssistantForShift(invalidAssistants, shift);
             try {
-                schedule.assign(assistant, days, shift);
+                schedule.assignNoBalance(assistant, days, shift);
             } catch (InvalidDayException | InvalidShiftTypeException e) {
+
                 invalidAssistants.add(assistant);
             }
         }
@@ -208,7 +255,7 @@ public class Algorithm {
                 .collect(Collectors.toList());
         Random random = new Random();
         if (allowedAssistants.size() == 0) {
-            throw new NoSuitableAssistantException("no allowed asssistants left");
+            throw new NoSuitableAssistantException("no allowed assistants left");
         }
         return allowedAssistants.get(random.nextInt(allowedAssistants.size()));
 

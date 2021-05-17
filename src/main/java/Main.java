@@ -1,3 +1,4 @@
+import exceptions.BadInstanceException;
 import exceptions.DbControllerException;
 import exceptions.NoSuitableAssistantException;
 import exceptions.NotSolvableException;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public class Main {
 
-    public static void main(String[] args) throws SQLException, DbControllerException, NoSuitableAssistantException, IOException, NotSolvableException {
+    public static void main(String[] args) throws SQLException, DbControllerException, NoSuitableAssistantException, IOException, NotSolvableException, BadInstanceException {
 /*
         InstanceGenerator.generateInstance(26, 53);
         String dbPath = System.getProperty("user.home") + "/scheduler/backend/real-instance.db";
@@ -67,22 +68,12 @@ public class Main {
         writer.close();
 
          */
-
-
-        String dbPath = System.getProperty("user.home") + "/scheduler/backend/test.db";
+        String dbPath = System.getProperty("user.home") + "/scheduler/backend/real-instance-second-semester.db";
         DbController controller = new DbController(dbPath);
-        InstanceData instance = InstanceGenerator.generateInstance(26, 40);
-        controller.putInstance(instance);
-
-
-        Algorithm algorithm = new Algorithm(instance, controller.getModelParameters());
-
+        ModelParameters params = controller.getModelParameters();
+        InstanceData data = controller.getInstanceData();
+        Algorithm algorithm = new Algorithm(data, params);
         Schedule schedule = algorithm.generateSchedule();
-        System.out.println("fairness: " + schedule.fairnessScore());
-        System.out.println("balance: " + schedule.balanceScore());
-        System.out.println(schedule.toString());
-
-
         controller.putSchedule(schedule);
     }
 }

@@ -11,13 +11,15 @@ public class Swap {
     private final List<Day> days;
     private final ShiftType shiftType;
     private final double fairnessScore;
+    private final double balanceScore;
 
-    Swap(Assistant from, Assistant to, List<Day> days, ShiftType shiftType, double fairnessScore) {
+    Swap(Assistant from, Assistant to, List<Day> days, ShiftType shiftType, double fairnessScore, double balanceScore) {
         this.from = from;
         this.to = to;
         this.days = days;
         this.shiftType = shiftType;
         this.fairnessScore = fairnessScore;
+        this.balanceScore = balanceScore;
     }
 
     public Assistant getFrom() {
@@ -38,6 +40,10 @@ public class Swap {
 
     public double getFairnessScore() {
         return fairnessScore;
+    }
+
+    public double getBalanceScore() {
+        return balanceScore;
     }
 
 }
