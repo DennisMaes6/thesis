@@ -5,10 +5,13 @@ import input.ShiftTypeModelParameters;
 import input.assistant.Assistant;
 import input.assistant.AssistantType;
 import input.shift.ShiftType;
+import input.time.Date;
 import input.time.Day;
 
 import java.sql.*;
 import java.util.*;
+
+import static java.lang.Integer.parseInt;
 
 public class DbController {
 
@@ -36,6 +39,14 @@ public class DbController {
         List<ShiftTypeModelParameters> stmps = getShiftTypeModelParameters();
         
         return new ModelParameters(minBalance, minBalanceJaev, stmps);
+    }
+
+    public void putMinBalance(int newMinBalance) throws SQLException {
+        String sql = "UPDATE model_parameters SET min_balance = ? WHERE id = 1";
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+        pstmt.setInt(1, newMinBalance);
+        pstmt.execute();
+        this.conn.commit();
     }
 
     private List<ShiftTypeModelParameters> getShiftTypeModelParameters() throws SQLException {
@@ -72,12 +83,18 @@ public class DbController {
     }
 
     private List<Day> getDays() throws SQLException {
-        String sql = "SELECT id, is_holiday FROM day";
+        String sql = "SELECT id, date, is_holiday FROM day";
         ResultSet rs = this.conn.createStatement().executeQuery(sql);
 
         List<Day> result = new ArrayList<>();
-        while (rs.next())
-            result.add(new Day(rs.getInt("id"), rs.getBoolean("is_holiday")));
+        while (rs.next()) {
+            String datestring = rs.getString("date");
+            int day = parseInt(datestring.split("-")[0]);
+            int month = parseInt(datestring.split("-")[1]);
+            int year = parseInt(datestring.split("-")[2]);
+            Date date = new Date(day, month, year);
+            result.add(new Day(rs.getInt("id"), rs.getBoolean("is_holiday"), date));
+        }
         return result;
     }
 
@@ -86,7 +103,7 @@ public class DbController {
         Set<Integer> result = new HashSet<>();
         StringTokenizer st = new StringTokenizer(inputStr, ",");
         while(st.hasMoreTokens())
-            result.add(Integer.parseInt(st.nextToken().trim()));
+            result.add(parseInt(st.nextToken().trim()));
         return result;
     }
 
