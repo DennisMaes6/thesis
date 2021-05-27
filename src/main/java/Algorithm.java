@@ -6,16 +6,14 @@ import input.shift.*;
 import input.time.Day;
 import input.time.Week;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Algorithm {
 
     private final InstanceData data;
     private final ModelParameters parameters;
+    private final Map<String, Integer> log = new HashMap<>();
 
     public Algorithm(InstanceData data, ModelParameters parameters) {
         this.data = data;
@@ -25,10 +23,17 @@ public class Algorithm {
     // run algorithm
     public Schedule generateSchedule() throws NotSolvableException, BadInstanceException {
         Schedule schedule = initialSchedule();
+        System.out.printf("initial balance: %f%n", schedule.balanceScore());
         optimizeBalance(schedule);
-        optimizeSchedule(schedule);
+        System.out.printf("improved balance: %f%n", schedule.balanceScore());
+        System.out.printf("initial fairness: %f%n", schedule.fairnessScore());
+        optimizeFairness(schedule);
+        System.out.printf("improved fairness: %f%n", schedule.fairnessScore());
+        System.out.printf("new balance: %f%n", schedule.balanceScore());
         initJaev(schedule);
+        System.out.println("jaev initialized");
         optimizeJaev(schedule);
+        System.out.println("jaev optimized");
         return schedule;
     }
 
@@ -46,12 +51,9 @@ public class Algorithm {
                                 changedList.add(
                                         performBestBalanceSwap(schedule, schedule.getWeekendSwaps(week, (WeekendShift) shift))
                                 );
-                        case HOLIDAY -> {
-                            for (Day day : week.getHolidays())
-                                changedList.add(
-                                        performBestBalanceSwap(schedule, schedule.getHolidaySwaps(day, (HolidayShift) shift))
-                                );
-                        }
+                        case HOLIDAY -> changedList.add(
+                                performBestBalanceSwap(schedule, schedule.getHolidaySwaps(week.getHolidays(), (HolidayShift) shift))
+                        );
                     }
                 }
             }
@@ -98,7 +100,7 @@ public class Algorithm {
         }
     }
 
-    private void optimizeSchedule(Schedule schedule) {
+    private void optimizeFairness(Schedule schedule) {
         boolean changed = true;
         while (changed) {
             List<Boolean> changedList = new ArrayList<>();
@@ -112,12 +114,9 @@ public class Algorithm {
                             changedList.add(
                                     performBestSwap(schedule, schedule.getWeekendSwaps(week, (WeekendShift) shift))
                             );
-                        case HOLIDAY -> {
-                            for (Day day : week.getHolidays())
-                                changedList.add(
-                                        performBestSwap(schedule, schedule.getHolidaySwaps(day, (HolidayShift) shift))
-                                );
-                        }
+                        case HOLIDAY -> changedList.add(
+                                performBestSwap(schedule, schedule.getHolidaySwaps(week.getHolidays(), (HolidayShift) shift))
+                        );
                     }
                 }
             }
@@ -182,6 +181,7 @@ public class Algorithm {
                 done = true;
             } catch (NoSuitableAssistantException e) {
                 if (count > 10000) {
+                    System.out.println(log.toString());
                     throw new NotSolvableException("too many restarts");
                 }
                 schedule = new Schedule(data, parameters);
@@ -193,12 +193,17 @@ public class Algorithm {
 
     private void initJaev(Schedule schedule) throws NotSolvableException, BadInstanceException {
         boolean done = false;
+        int count = 0;
         while (!done) {
             try {
                 completeJaev(schedule);
                 done = true;
             } catch (NoSuitableAssistantException e) {
+                if (count > 1000) {
+                    throw new NotSolvableException("too many jaev restarts");
+                }
                 schedule = new Schedule(data, parameters);
+                count++;
             }
         }
     }
@@ -225,10 +230,7 @@ public class Algorithm {
                 switch (shift.getPeriod()) {
                     case WEEK -> completeScheduleFor(schedule, week.getDays(), shift);
                     case WEEKEND -> completeScheduleFor(schedule, week.getWeekendDays(), shift);
-                    case HOLIDAY -> {
-                        for (Day day : week.getHolidays())
-                                completeScheduleFor(schedule, Collections.singletonList(day), shift);
-                    }
+                    case HOLIDAY -> completeScheduleFor(schedule, week.getHolidays(), shift);
                 }
             }
         }
@@ -239,9 +241,13 @@ public class Algorithm {
         while (schedule.nbAssignmentsOfShiftTypeOn(days.get(0), shift.getType()) < shift.getCoverage(days.get(0))) {
             Assistant assistant = randomAssistantForShift(invalidAssistants, shift);
             try {
-                schedule.assignNoBalance(assistant, days, shift);
+                schedule.assign(assistant, days, shift);
             } catch (InvalidDayException | InvalidShiftTypeException e) {
-
+                if (this.log.containsKey(e.getMessage())) {
+                    this.log.put(e.getMessage(), this.log.get(e.getMessage())+1);
+                } else {
+                    this.log.put(e.getMessage(), 1);
+                }
                 invalidAssistants.add(assistant);
             }
         }
