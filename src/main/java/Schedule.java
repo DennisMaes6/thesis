@@ -24,7 +24,7 @@ public class Schedule {
     private final ShiftType[][] schedule;
     private final JuniorAssistantEvening jaevShift;
 
-    public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException, BadInstanceException {
+    public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException {
         this.data = data;
         this.parameters = parameters;
         initializeShifts(parameters.getShiftTypeModelParameters());
@@ -399,8 +399,8 @@ public class Schedule {
         return getSwaps(week.getWeekendDays(), shift.getType());
     }
 
-    public List<Swap> getHolidaySwaps(Day holiday, HolidayShift shift) {
-        return getSwaps(Collections.singletonList(holiday), shift.getType());
+    public List<Swap> getHolidaySwaps(List<Day> holidays, HolidayShift shift) {
+        return getSwaps(holidays, shift.getType());
     }
 
     private List<Swap> getSwaps(List<Day> days, ShiftType st) {
