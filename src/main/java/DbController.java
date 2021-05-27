@@ -200,4 +200,12 @@ public class DbController {
         }
         pstmt.executeBatch();
     }
+
+    private void putMinBalanceScore(int minBalance) throws SQLException {
+        String sql = "UPDATE model_parameters SET min_balance = ? WHERE id = 1";
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+        pstmt.setInt(1, minBalance);
+        pstmt.execute();
+        this.conn.commit();
+    }
 }
