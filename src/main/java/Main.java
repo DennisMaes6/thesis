@@ -5,8 +5,13 @@ import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ModelParameters;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,12 +73,47 @@ public class Main {
         writer.close();
 
          */
-        String dbPath = System.getProperty("user.home") + "/scheduler/backend/real-instance-second-semester.db";
-        DbController controller = new DbController(dbPath);
-        ModelParameters params = controller.getModelParameters();
-        InstanceData data = controller.getInstanceData();
-        Algorithm algorithm = new Algorithm(data, params);
-        Schedule schedule = algorithm.generateSchedule();
-        controller.putSchedule(schedule);
+        DbController realInstanceController = new DbController(System.getProperty("user.home") + "/scheduler/backend/real-instance-second-semester.db");
+        InstanceData realData = realInstanceController.getInstanceData();
+        DbController testInstanceController = new DbController(System.getProperty("user.home") + "/scheduler/backend/real-performance-test.db");
+
+        FileWriter writer = new FileWriter("performance-test.txt");
+        writer.write("nb_weeks, min_balance, time, succeeded\n");
+
+        for (int nbWeeks = 4; nbWeeks < 28; nbWeeks++) {
+            InstanceData testData = new InstanceData(realData.getAssistants(), realData.getDays().subList(0, 7*nbWeeks));
+            testInstanceController.putInstance(testData);
+
+            int minBalance = 12;
+            boolean solved = true;
+            while (solved) {
+                testInstanceController.putMinBalance(minBalance);
+                long startTime = System.nanoTime();
+                URL url = new URL("http://localhost:8080/schedule");
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("GET");
+                if (con.getResponseCode() > 299) {
+                    long endTime = System.nanoTime();
+                    solved = false;
+                    writer.write(String.format("%d,%d,%f,%b\n", nbWeeks, minBalance, (endTime-startTime)/1000000.0, false));
+                    System.out.printf("FAILURE... nb weeks: %d, min balance: %d, time: %f\n", nbWeeks, minBalance, (endTime-startTime)/1000000.0);
+                } else {
+                    long endTime = System.nanoTime();
+                    File targetFile = new File(String.format("src/main/resources/schedule-%d-weeks-%d-min-balance.json", nbWeeks, minBalance));
+                    java.nio.file.Files.copy(
+                            con.getInputStream(),
+                            targetFile.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
+                    writer.write(String.format("%d,%d,%f,%b\n", nbWeeks, minBalance, (endTime-startTime)/1000000.0, true));
+                    System.out.printf("SUCCESS! nb weeks: %d, min balance: %d, time: %f\n", nbWeeks, minBalance, (endTime-startTime)/1000000.0);
+                }
+                writer.flush();
+                minBalance++;
+                if (minBalance > 21) {
+                    solved = false;
+                }
+            }
+        }
+        writer.close();
     }
 }
