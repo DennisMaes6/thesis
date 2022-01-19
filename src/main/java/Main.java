@@ -135,7 +135,7 @@ public class Main {
         InstanceData instanceData = dbController.getInstanceData();
         ModelParameters modelParameters = dbController.getModelParameters();
         
-        System.out.println("DATA DAYS: " + instanceData.getDays());
+
 
         System.out.println("Instance data & model parameters loaded. Start loading algorithm...");
 

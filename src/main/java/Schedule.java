@@ -10,6 +10,7 @@ import input.shift.*;
 import input.time.Day;
 import input.time.Week;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,7 +22,7 @@ public class Schedule {
     private final InstanceData data;
     private final ModelParameters parameters;
     private final Map<ShiftType, Shift> shifts = new HashMap<>();
-    private final ShiftType[][] schedule;
+    public final ShiftType[][] schedule;
     private final JuniorAssistantEvening jaevShift;
 
     public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException {
@@ -49,6 +50,42 @@ public class Schedule {
         if (!isSolvable()) {
             throw new NotSolvableException("not solvable!");
         }
+    }
+
+    public Schedule(InstanceData data, ModelParameters parameters, List<Triplet<Integer, Integer, ShiftType>> assignments){
+        this.data = data;
+        this.parameters = parameters;
+        this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
+        this.jaevShift = new JuniorAssistantEvening(1.0);
+        initializeShifts(parameters.getShiftTypeModelParameters());
+        initializeJaevShift(1);
+
+        fillScheduleFromInput(assignments);
+
+    }
+
+
+    private void fillScheduleFromInput(List<Triplet<Integer, Integer, ShiftType>> assignments){
+        HashMap<Integer, Integer> idToIndex = new HashMap<>();
+        for (int i = 0; i < getNbAssistants(); i++) {
+            data.getAssistants().get(i).setIndex(i);
+            idToIndex.put(data.getAssistants().get(i).getId(), i);
+        }
+        HashMap<Integer, Integer> dayToIndex = new HashMap<>();
+        for (int j = 0; j < getNbDays(); j ++) {
+            data.getDays().get(j).setIndex(j);
+            dayToIndex.put(data.getDays().get(j).getId(), j);
+        }
+
+        // Triplet: (assistant_id, day_nb, shift_type)
+        for(Triplet<Integer, Integer, ShiftType> assignment : assignments){
+            int currentAssistantIndex = idToIndex.get(assignment.getValue0());
+            int currentDayNb = dayToIndex.get(assignment.getValue1());
+            ShiftType curShiftType = assignment.getValue2();
+            this.schedule[currentAssistantIndex][currentDayNb] = curShiftType;
+        }
+
+
     }
 
     private void initializeShifts(List<ShiftTypeModelParameters> stps) {
@@ -312,9 +349,6 @@ public class Schedule {
         if (daysActive(assistant) == 0) {
             return 0;
         }
-        
- 
-        
         return Arrays.stream(schedule[assistant.getIndex()])
                 .filter(st -> st != JAEV)
                 .map(this::workload)

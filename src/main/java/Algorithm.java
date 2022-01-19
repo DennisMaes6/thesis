@@ -34,6 +34,11 @@ public class Algorithm {
         System.out.println("jaev initialized");
         optimizeJaev(schedule);
         System.out.println("jaev optimized");
+
+        System.out.println("Scheduling done.");
+        System.out.println("Printing schedule");
+        //System.out.println(schedule.schedule);
+        System.out.println(Arrays.deepToString(schedule.schedule).replace("], ", "]\n").replace("[[", "[").replace("]]", "]"));
         return schedule;
     }
 

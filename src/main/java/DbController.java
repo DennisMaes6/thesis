@@ -11,6 +11,8 @@ import input.time.Day;
 import java.sql.*;
 import java.util.*;
 
+import org.javatuples.Triplet;
+
 import static java.lang.Integer.parseInt;
 
 public class DbController {
@@ -170,6 +172,23 @@ public class DbController {
         }
         pstmt.executeBatch();
     }
+
+    public List<Triplet<Integer, Integer, ShiftType>> getAssignments() throws SQLException{
+        String sql = "SELECT assistant_id, day_nb, shift_type FROM assignment";
+        ResultSet rs = this.conn.createStatement().executeQuery(sql);
+        System.out.println(rs);
+        
+        List<Triplet<Integer, Integer, ShiftType>> result = new ArrayList<>();
+
+        while (rs.next()) {
+            int currentAssistantID = rs.getInt("assistant_id");
+            int currentDayNb = rs.getInt("day_nb");
+            ShiftType currentST = ShiftType.valueOf(rs.getString("shift_type"));
+            Triplet<Integer, Integer, ShiftType> currentEntry = Triplet.with(currentAssistantID, currentDayNb, currentST);
+            result.add(currentEntry);
+        }
+       return result;  
+    } 
 
     public void putInstance(InstanceData data) throws SQLException {
         this.putDays(data.getDays());
