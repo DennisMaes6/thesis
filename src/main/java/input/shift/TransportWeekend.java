@@ -20,14 +20,14 @@ public class TransportWeekend extends WeekendShift {
         super(workload);
     }
 
-
+    /*
     @Override
     public int getCoverage(Day day) {
         if (day.isWeekend())
             return 1;
         return 0;
     }
-
+    */
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {
         return ALLOWED_ASSISTANT_TYPES;

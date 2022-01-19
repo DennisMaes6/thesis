@@ -1,27 +1,38 @@
-/Users/jorensjongers/thesis/src/main/java/DbController.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/JuniorAssistantWeekendHoliday.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/ShiftTypePeriod.java
-/Users/jorensjongers/thesis/src/main/java/Main.java
-/Users/jorensjongers/thesis/src/main/java/input/assistant/AssistantType.java
-/Users/jorensjongers/thesis/src/main/java/Algorithm.java
-/Users/jorensjongers/thesis/src/main/java/Schedule.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/WeekendHolidayShift.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/JuniorAssistantEvening.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/Call.java
-/Users/jorensjongers/thesis/src/main/java/input/InstanceData.java
-/Users/jorensjongers/thesis/src/main/java/input/ModelParameters.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/JuniorAssistantNightWeek.java
-/Users/jorensjongers/thesis/src/main/java/exceptions/InvalidDayException.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/ShiftType.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/SeniorAssistantWeekendHoliday.java
-/Users/jorensjongers/thesis/src/main/java/input/ShiftTypeModelParameters.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/DayShift.java
-/Users/jorensjongers/thesis/src/main/java/input/assistant/Assistant.java
-/Users/jorensjongers/thesis/src/main/java/input/time/Day.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/SeniorAssistantEveningWeek.java
-/Users/jorensjongers/thesis/src/main/java/input/time/Week.java
-/Users/jorensjongers/thesis/src/main/java/exceptions/AssignWholeWeekendsException.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/Transport.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/ShiftTypeId.java
-/Users/jorensjongers/thesis/src/main/java/exceptions/InvalidShiftTypeException.java
-/Users/jorensjongers/thesis/src/main/java/input/shifttype/WeekShift.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/assistant/AssistantType.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/JuniorAssistantEvening.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/Call.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/Schedule.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/InvalidShiftTypeException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/WeekShift.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/AssignWholeWeekendsException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/time/Day.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/time/Date.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/NotSolvableException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/InstanceGenerator.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/NoSuitableAssistantException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/JuniorAssistantHoliday.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/JuniorAssistantWeekend.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/time/Week.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/Shift.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/DbControllerException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/ShiftPeriod.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/Algorithm.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/ShiftType.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/Swap.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/SeniorAssistantHoliday.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/TransportWeekend.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/WeekendShift.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/SeniorAssistantEveningWeek.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/JaevSwap.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/assistant/Assistant.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/Main.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/ShiftTypeModelParameters.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/JuniorAssistantNightWeek.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/DbController.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/InvalidDayException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/TransportHoliday.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/exceptions/BadInstanceException.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/ModelParameters.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/HolidayShift.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/shift/SeniorAssistantWeekend.java
+/Users/dennismaes/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/thesis/src/main/java/input/InstanceData.java

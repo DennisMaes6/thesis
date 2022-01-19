@@ -73,14 +73,21 @@ public class Main {
         writer.close();
 
          */
-        DbController realInstanceController = new DbController(System.getProperty("user.home") + "/scheduler/backend/real-instance-second-semester.db");
+
+         /*
+        DbController realInstanceController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");
         InstanceData realData = realInstanceController.getInstanceData();
-        DbController testInstanceController = new DbController(System.getProperty("user.home") + "/scheduler/backend/real-performance-test.db");
+        DbController testInstanceController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo_copy.db");
 
         FileWriter writer = new FileWriter("performance-test.txt");
         writer.write("nb_weeks, min_balance, time, succeeded\n");
+        
 
-        for (int nbWeeks = 4; nbWeeks < 28; nbWeeks++) {
+        //System.out.println(realData.getWeeks().size());
+
+        for(int nbWeeks = realData.getWeeks().size(); nbWeeks < realData.getWeeks().size() + 1; nbWeeks++){
+        //for (int nbWeeks = 4; nbWeeks < 28; nbWeeks++) {
+            System.out.println( nbWeeks);
             InstanceData testData = new InstanceData(realData.getAssistants(), realData.getDays().subList(0, 7*nbWeeks));
             testInstanceController.putInstance(testData);
 
@@ -89,11 +96,12 @@ public class Main {
             while (solved) {
                 testInstanceController.putMinBalance(minBalance);
                 long startTime = System.nanoTime();
-                URL url = new URL("http://localhost:8080/schedule");
+                URL url = new URL("http://localhost:8080/backend/db-schedule");
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
                 con.setRequestMethod("GET");
                 if (con.getResponseCode() > 299) {
                     long endTime = System.nanoTime();
+                    System.out.println("ERROR RESPONSE CODE: "+  con.getResponseCode());
                     solved = false;
                     writer.write(String.format("%d,%d,%f,%b\n", nbWeeks, minBalance, (endTime-startTime)/1000000.0, false));
                     System.out.printf("FAILURE... nb weeks: %d, min balance: %d, time: %f\n", nbWeeks, minBalance, (endTime-startTime)/1000000.0);
@@ -115,5 +123,33 @@ public class Main {
             }
         }
         writer.close();
+        */
+        runAlgo();
+
     }
+
+
+    public static void runAlgo() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException{
+        
+        DbController dbController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");
+        InstanceData instanceData = dbController.getInstanceData();
+        ModelParameters modelParameters = dbController.getModelParameters();
+        
+        System.out.println("DATA DAYS: " + instanceData.getDays());
+
+        System.out.println("Instance data & model parameters loaded. Start loading algorithm...");
+
+        Algorithm algo = new Algorithm(instanceData, modelParameters);
+        System.out.println("Algorithm instance created. Start running...");
+
+        Schedule schedule = algo.generateSchedule();
+
+        System.out.println("Schedule generated. Writing to database...");
+
+        dbController.putSchedule(schedule);
+        System.out.println("Writing to database done.");
+
+    } 
+
+    
 }

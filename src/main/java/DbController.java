@@ -18,6 +18,13 @@ public class DbController {
     Connection conn;
 
     DbController(String filePath) throws SQLException {
+        System.out.println(filePath);
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         String connectionString = "jdbc:sqlite:" + filePath;
         this.conn = DriverManager.getConnection(connectionString);
         conn.setAutoCommit(false);
