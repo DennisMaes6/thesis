@@ -3,15 +3,19 @@ package input.shift;
 import input.assistant.AssistantType;
 import input.time.Day;
 
+import java.util.HashMap;
 import java.util.Set;
 
 public abstract class Shift {
 
     private final double dailyWorkload;
     private int maxAssignments;
+    
+    private HashMap<Day, Integer> coverage;
 
     Shift(double dailyWorkload) {
         this.dailyWorkload = dailyWorkload;
+        this.coverage = new HashMap<Day, Integer>();
     }
 
     public double getDailyWorkload() {
@@ -26,7 +30,13 @@ public abstract class Shift {
         this.maxAssignments = maxAssignments;
     }
 
-    public abstract int getCoverage(Day day);
+    public int getCoverage(Day day) {
+        return this.coverage.get(day);
+    }
+
+    public void setCoverage(Day day, int cov){
+        this.coverage.put(day, cov);
+    }
 
     public abstract ShiftPeriod getPeriod();
 

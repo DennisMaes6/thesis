@@ -34,6 +34,11 @@ public class Algorithm {
         System.out.println("jaev initialized");
         optimizeJaev(schedule);
         System.out.println("jaev optimized");
+
+        System.out.println("Scheduling done.");
+        System.out.println("Printing schedule");
+        //System.out.println(schedule.schedule);
+        System.out.println(Arrays.deepToString(schedule.schedule).replace("], ", "]\n").replace("[[", "[").replace("]]", "]"));
         return schedule;
     }
 
@@ -228,9 +233,19 @@ public class Algorithm {
         for (Week week : data.getWeeks()) {
             for (Shift shift : schedule.getShifts().values()) {
                 switch (shift.getPeriod()) {
-                    case WEEK -> completeScheduleFor(schedule, week.getDays(), shift);
-                    case WEEKEND -> completeScheduleFor(schedule, week.getWeekendDays(), shift);
-                    case HOLIDAY -> completeScheduleFor(schedule, week.getHolidays(), shift);
+                    case WEEK:
+                        completeScheduleFor(schedule, week.getDays(), shift);
+                        break;
+                    case WEEKEND:
+                        if(!week.getWeekendDays().isEmpty()){
+                            completeScheduleFor(schedule, week.getWeekendDays(), shift);
+                    }
+                        break;
+                    case HOLIDAY:
+                        if(!week.getHolidays().isEmpty()){
+                            completeScheduleFor(schedule, week.getHolidays(), shift);
+                        }                 
+                        break;         
                 }
             }
         }
@@ -238,7 +253,11 @@ public class Algorithm {
 
     private void completeScheduleFor(Schedule schedule, List<Day> days, Shift shift) throws NoSuitableAssistantException {
         List<Assistant> invalidAssistants = new ArrayList<>();
+
+        
+
         while (schedule.nbAssignmentsOfShiftTypeOn(days.get(0), shift.getType()) < shift.getCoverage(days.get(0))) {
+        
             Assistant assistant = randomAssistantForShift(invalidAssistants, shift);
             try {
                 schedule.assign(assistant, days, shift);
@@ -250,6 +269,7 @@ public class Algorithm {
                 }
                 invalidAssistants.add(assistant);
             }
+        
         }
     }
 

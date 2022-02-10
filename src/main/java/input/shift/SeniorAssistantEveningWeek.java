@@ -19,11 +19,12 @@ public class SeniorAssistantEveningWeek extends WeekShift {
     public SeniorAssistantEveningWeek(double workload) {
         super(workload);
     }
-
+    /*
     @Override
     public int getCoverage(Day day) {
         return 1;
     }
+    */
 
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {

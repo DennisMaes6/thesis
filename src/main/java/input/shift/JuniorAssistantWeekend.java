@@ -18,16 +18,17 @@ public class JuniorAssistantWeekend extends WeekendShift {
 
     public JuniorAssistantWeekend(double workload) {
         super(workload);
+        //super(3.0);
     }
 
-
+    /*
     @Override
     public int getCoverage(Day day) {
         if (day.isWeekend())
             return 2;
         return 0;
     }
-
+    */
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {
         return ALLOWED_ASSISTANT_TYPES;

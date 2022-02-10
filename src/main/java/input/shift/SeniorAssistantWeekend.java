@@ -21,13 +21,14 @@ public class SeniorAssistantWeekend extends WeekendShift {
     public SeniorAssistantWeekend(double workload) {
         super(workload);
     }
-
+    /*
     @Override
     public int getCoverage(Day day) {
         if (day.isWeekend())
             return 2;
         return 0;
     }
+    */
 
     @Override
     public Set<AssistantType> getAllowedAssistantTypes() {

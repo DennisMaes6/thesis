@@ -22,6 +22,7 @@ public class Week {
         return this.days;
     }
 
+
     public List<Day> getWeekendDays() {
         return this.days.subList(1, 3).stream().filter(d -> !d.isHoliday()).collect(Collectors.toList());
     }

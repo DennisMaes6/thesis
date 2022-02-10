@@ -11,6 +11,8 @@ import input.time.Day;
 import java.sql.*;
 import java.util.*;
 
+import org.javatuples.Triplet;
+
 import static java.lang.Integer.parseInt;
 
 public class DbController {
@@ -18,6 +20,13 @@ public class DbController {
     Connection conn;
 
     DbController(String filePath) throws SQLException {
+        System.out.println(filePath);
+
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         String connectionString = "jdbc:sqlite:" + filePath;
         this.conn = DriverManager.getConnection(connectionString);
         conn.setAutoCommit(false);
@@ -50,7 +59,7 @@ public class DbController {
     }
 
     private List<ShiftTypeModelParameters> getShiftTypeModelParameters() throws SQLException {
-        String sql = "SELECT shift_type, shift_workload, max_buffer FROM shift_type_parameters";
+        String sql = "SELECT shift_type, shift_workload, shift_coverage, max_buffer FROM shift_type_parameters";
         ResultSet rs = this.conn.createStatement().executeQuery(sql);
 
         List<ShiftTypeModelParameters> result = new ArrayList<>();
@@ -58,6 +67,7 @@ public class DbController {
             ShiftTypeModelParameters stmp = new ShiftTypeModelParameters(
                     ShiftType.valueOf(rs.getString("shift_type")),
                     rs.getFloat("shift_workload"),
+                    rs.getInt("shift_coverage"),
                     rs.getInt("max_buffer")
 
             );
@@ -163,6 +173,23 @@ public class DbController {
         }
         pstmt.executeBatch();
     }
+
+    public List<Triplet<Integer, Integer, ShiftType>> getAssignments() throws SQLException{
+        String sql = "SELECT assistant_id, day_nb, shift_type FROM assignment";
+        ResultSet rs = this.conn.createStatement().executeQuery(sql);
+        System.out.println(rs);
+        
+        List<Triplet<Integer, Integer, ShiftType>> result = new ArrayList<>();
+
+        while (rs.next()) {
+            int currentAssistantID = rs.getInt("assistant_id");
+            int currentDayNb = rs.getInt("day_nb");
+            ShiftType currentST = ShiftType.valueOf(rs.getString("shift_type"));
+            Triplet<Integer, Integer, ShiftType> currentEntry = Triplet.with(currentAssistantID, currentDayNb, currentST);
+            result.add(currentEntry);
+        }
+       return result;  
+    } 
 
     public void putInstance(InstanceData data) throws SQLException {
         this.putDays(data.getDays());

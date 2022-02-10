@@ -10,6 +10,7 @@ import input.shift.*;
 import input.time.Day;
 import input.time.Week;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,7 +22,7 @@ public class Schedule {
     private final InstanceData data;
     private final ModelParameters parameters;
     private final Map<ShiftType, Shift> shifts = new HashMap<>();
-    private final ShiftType[][] schedule;
+    public final ShiftType[][] schedule;
     private final JuniorAssistantEvening jaevShift;
 
     public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException {
@@ -29,7 +30,8 @@ public class Schedule {
         this.parameters = parameters;
         initializeShifts(parameters.getShiftTypeModelParameters());
         this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
-        this.jaevShift = new JuniorAssistantEvening();
+        this.jaevShift = new JuniorAssistantEvening(1.0);
+        initializeJaevShift(1, 1);
 
         for (int i = 0; i < getNbAssistants(); i++) {
             data.getAssistants().get(i).setIndex(i);
@@ -44,28 +46,196 @@ public class Schedule {
                 schedule[i][j] = FREE;
             }
         }
-
+        /*
         if (!isSolvable()) {
             throw new NotSolvableException("not solvable!");
+        } */
+    }
+
+    public Schedule(InstanceData data, ModelParameters parameters, List<Triplet<Integer, Integer, ShiftType>> assignments){
+        this.data = data;
+        this.parameters = parameters;
+        this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
+        this.jaevShift = new JuniorAssistantEvening(1.0);
+        initializeShifts(parameters.getShiftTypeModelParameters());
+        
+        initializeJaevShift(1, 1); // TODO: niet hardcoden
+
+        fillScheduleFromInput(assignments);
+
+    }
+
+
+    private void fillScheduleFromInput(List<Triplet<Integer, Integer, ShiftType>> assignments){
+        HashMap<Integer, Integer> idToIndex = new HashMap<>();
+        for (int i = 0; i < getNbAssistants(); i++) {
+            data.getAssistants().get(i).setIndex(i);
+            idToIndex.put(data.getAssistants().get(i).getId(), i);
         }
+        HashMap<Integer, Integer> dayToIndex = new HashMap<>();
+        for (int j = 0; j < getNbDays(); j ++) {
+            data.getDays().get(j).setIndex(j);
+            dayToIndex.put(data.getDays().get(j).getId(), j);
+        }
+
+        // Triplet: (assistant_id, day_nb, shift_type)
+        for(Triplet<Integer, Integer, ShiftType> assignment : assignments){
+            int currentAssistantIndex = idToIndex.get(assignment.getValue0());
+            int currentDayNb = dayToIndex.get(assignment.getValue1());
+            ShiftType curShiftType = assignment.getValue2();
+            this.schedule[currentAssistantIndex][currentDayNb] = curShiftType;
+        }
+
+
     }
 
     private void initializeShifts(List<ShiftTypeModelParameters> stps) {
         for (ShiftTypeModelParameters stp : stps) {
             switch (stp.getShiftType()) {
-                case JANW -> this.shifts.put(JANW, new JuniorAssistantNightWeek(stp.getWorkload()));
-                case JAWE -> this.shifts.put(JAWE, new JuniorAssistantWeekend(stp.getWorkload()));
-                case JAHO -> this.shifts.put(JAHO, new JuniorAssistantHoliday(stp.getWorkload()));
-                case SAEW -> this.shifts.put(SAEW, new SeniorAssistantEveningWeek(stp.getWorkload()));
-                case SAWE -> this.shifts.put(SAWE, new SeniorAssistantWeekend(stp.getWorkload()));
-                case SAHO -> this.shifts.put(SAHO, new SeniorAssistantHoliday(stp.getWorkload()));
-                case TPWE -> this.shifts.put(TPWE, new TransportWeekend(stp.getWorkload()));
-                case TPHO -> this.shifts.put(TPHO, new TransportHoliday(stp.getWorkload()));
-                case CALL -> this.shifts.put(CALL, new Call(stp.getWorkload()));
+
+                case JANW -> initializeJuniorAssistantNightWeekShift(stp.getWorkload(), stp.getCoverage());
+                case JAWE -> initializeJuniorAssistantWeekendShift(stp.getWorkload(), stp.getCoverage());
+                case JAHO -> initializeJuniorAssistantHolidayShift(stp.getWorkload(), stp.getCoverage());
+                case SAEW -> initializeSeniorAssistantEveningWeekShift(stp.getWorkload(), stp.getCoverage());
+                case SAWE -> initializeSeniorAssistantWeekendShift(stp.getWorkload(), stp.getCoverage());
+                case SAHO -> initializeSeniorAssistantHolidayShift(stp.getWorkload(), stp.getCoverage());
+                case TPWE -> initializeTransportWeekendShift(stp.getWorkload(), stp.getCoverage());
+                case TPHO -> initializeTransportHolidayShift(stp.getWorkload(), stp.getCoverage());
+                case CALL -> initializeCallShift(stp.getWorkload(), stp.getCoverage());
+                
+                //case JANW -> this.shifts.put(JANW, new JuniorAssistantNightWeek(stp.getWorkload()));
+                //case JAWE -> this.shifts.put(JAWE, new JuniorAssistantWeekend(stp.getWorkload()));
+                //case JAHO -> this.shifts.put(JAHO, new JuniorAssistantHoliday(stp.getWorkload()));
+                //case SAEW -> this.shifts.put(SAEW, new SeniorAssistantEveningWeek(stp.getWorkload()));
+                //case SAWE -> this.shifts.put(SAWE, new SeniorAssistantWeekend(stp.getWorkload()));
+                //case SAHO -> this.shifts.put(SAHO, new SeniorAssistantHoliday(stp.getWorkload()));
+                //case TPWE -> this.shifts.put(TPWE, new TransportWeekend(stp.getWorkload()));
+                //case TPHO -> this.shifts.put(TPHO, new TransportHoliday(stp.getWorkload()));
+                //case CALL -> this.shifts.put(CALL, new Call(stp.getWorkload()));
             }
         }
         initMaxAssignments(stps);
     }
+
+    private void initializeJaevShift(double workload, int coverage){
+
+        for(Day d : this.data.getDays()){
+            if(!d.isHoliday() && !d.isWeekend()){
+                this.jaevShift.setCoverage(d, coverage);
+            } else {
+                this.jaevShift.setCoverage(d, 0);
+            }    
+        }
+
+    }
+    private void initializeJuniorAssistantNightWeekShift(double workload, int coverage){
+        JuniorAssistantNightWeek newShift = new JuniorAssistantNightWeek(workload);
+        for(Day d : this.data.getDays()){
+            newShift.setCoverage(d, coverage);
+            /*
+            if(!d.isHoliday() ){
+            //if(!d.isHoliday() && !d.isWeekend()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }     */
+        }
+        this.shifts.put(JANW, newShift);
+    }
+    private void initializeJuniorAssistantWeekendShift(double workload, int coverage){
+        JuniorAssistantWeekend newShift = new JuniorAssistantWeekend(workload);
+        for(Day d : this.data.getDays()){
+            if(!d.isHoliday() && d.isWeekend()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(JAWE, newShift);
+    }
+    private void initializeJuniorAssistantHolidayShift(double workload, int coverage){
+        JuniorAssistantHoliday newShift = new JuniorAssistantHoliday(workload);
+        for(Day d : this.data.getDays()){
+            if(d.isHoliday()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(JAHO, newShift);
+    }
+    private void initializeSeniorAssistantEveningWeekShift(double workload, int coverage){
+        SeniorAssistantEveningWeek newShift = new SeniorAssistantEveningWeek(workload);        
+        for(Day d : this.data.getDays()){
+            newShift.setCoverage(d, coverage);
+            /*
+            if(!d.isHoliday() ){
+            //if(!d.isHoliday() && !d.isWeekend()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    */
+        } 
+        this.shifts.put(SAEW, newShift);
+    }
+    private void initializeSeniorAssistantWeekendShift(double workload, int coverage){
+        SeniorAssistantWeekend newShift = new SeniorAssistantWeekend(workload);
+        for(Day d : this.data.getDays()){
+            if(d.isWeekend() && !d.isHoliday()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(SAWE, newShift);
+    }
+    private void initializeSeniorAssistantHolidayShift(double workload, int coverage){
+        SeniorAssistantHoliday newShift = new SeniorAssistantHoliday(workload);
+        for(Day d : this.data.getDays()){
+            if(d.isHoliday()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(SAHO, newShift);
+    }
+
+
+    private void initializeTransportWeekendShift(double workload, int coverage){
+        TransportWeekend newShift = new TransportWeekend(workload);
+        for(Day d : this.data.getDays()){
+            if(!d.isHoliday() && d.isWeekend()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(TPWE, newShift);
+    }
+    private void initializeTransportHolidayShift(double workload, int coverage){
+        TransportHoliday newShift = new TransportHoliday(workload);
+        for(Day d : this.data.getDays()){
+            if(d.isHoliday()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(TPHO, newShift);
+    }
+    private void initializeCallShift(double workload, int coverage){
+        Call newShift = new Call(workload);
+        for(Day d : this.data.getDays()){
+            if(!d.isHoliday() && !d.isWeekend()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }    
+        }
+        this.shifts.put(CALL, newShift);
+    }
+
 
     private void initMaxAssignments(List<ShiftTypeModelParameters> stps) {
         for (ShiftTypeModelParameters stp : stps) {
@@ -112,11 +282,15 @@ public class Schedule {
                         .stream()
                         .filter(a -> shifts.get(shiftType).getAllowedAssistantTypes().contains(a.getType()))
                         .collect(Collectors.toList());
-                if (allowedAssistants.size() < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0))) {
-                    return false;
-                }
-                for (int i = 0; i < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0)); i++) {
-                    assistants.remove(allowedAssistants.get(i));
+               
+                if(!week.getWeekendDays().isEmpty()){
+                    if (allowedAssistants.size() < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0))) {
+                        return false;
+                    }
+                    
+                    for (int i = 0; i < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0)); i++) {
+                        assistants.remove(allowedAssistants.get(i));
+                    }
                 }
             }
 
@@ -152,10 +326,23 @@ public class Schedule {
         return true;
     }
 
+    // First version: simply count the nb of shifts that haven't been assigned or are assigned too much.
+    public Double getFitnessScore(){
+        double result = 0.0;
+        for(Day day : this.data.getDays()){
+            for(Shift sh : this.getShifts().values()){
+                result += Math.abs( sh.getCoverage(day) - nbAssignmentsOfShiftTypeOn(day, sh.getType()));
+            }
+        }
+
+        return result;
+    }
+
     // optimization objective
     public double fairnessScore() {
         List<Double> workloadPerAssistant = new ArrayList<>();
         for (Assistant assistant : data.getAssistants()) {
+            
             workloadPerAssistant.add(workloadForAssistant(assistant));
         }
         return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant)
@@ -174,6 +361,7 @@ public class Schedule {
         if (daysActive(assistant) == 0) {
             return 0;
         }
+
         return Arrays.stream(schedule[assistant.getIndex()])
                 .filter(st -> st != JAEV)
                 .map(this::workload)
@@ -194,10 +382,13 @@ public class Schedule {
         if (shiftType == FREE)
             return 0.0;
         else {
+            //return 1.0;
+            
             if (shiftType == JAEV) {
-                return this.jaevShift.getDailyWorkload();
+                return this.jaevShift.getDailyWorkload();      
             }
-            return shifts.get(shiftType).getDailyWorkload();
+   
+            return shifts.get(shiftType).getDailyWorkload(); 
         }
     }
 
@@ -353,8 +544,10 @@ public class Schedule {
     private int nbWeekendAssignments(Assistant assistant, WeekendShift shift) {
         int result = 0;
         for (Week week : data.getWeeks()) {
-            if (assignmentOn(assistant, week.getWeekendDays().get(0)) == shift.getType()) {
-                result++;
+            if(!week.getWeekendDays().isEmpty()){
+                if (assignmentOn(assistant, week.getWeekendDays().get(0)) == shift.getType()) {
+                    result++;
+                }
             }
         }
         return result;
@@ -372,7 +565,7 @@ public class Schedule {
         return result;
     }
 
-    private void clear(Assistant a, List<Day> days) {
+    public void clear(Assistant a, List<Day> days) {
         for (Day day : days)
             this.schedule[a.getIndex()][day.getIndex()] = FREE;
     }
@@ -396,11 +589,19 @@ public class Schedule {
     }
 
     public List<Swap> getWeekendSwaps(Week week, WeekendShift shift) {
-        return getSwaps(week.getWeekendDays(), shift.getType());
+        List<Swap> result = new ArrayList<>();
+        if(!week.getWeekendDays().isEmpty()){
+            result = getSwaps(week.getWeekendDays(), shift.getType());
+        }
+        return result;
     }
 
     public List<Swap> getHolidaySwaps(List<Day> holidays, HolidayShift shift) {
-        return getSwaps(holidays, shift.getType());
+        List<Swap> candidateSwaps = new ArrayList<>();
+        if(!holidays.isEmpty()){
+            candidateSwaps = getSwaps(holidays, shift.getType());
+        }
+        return candidateSwaps;
     }
 
     private List<Swap> getSwaps(List<Day> days, ShiftType st) {

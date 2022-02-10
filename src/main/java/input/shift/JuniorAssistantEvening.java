@@ -14,10 +14,11 @@ public class JuniorAssistantEvening extends Shift {
     );
 
 
-    public JuniorAssistantEvening() {
-        super(1.0);
+    public JuniorAssistantEvening(double workload) {
+        super(workload);
     }
 
+    /*
     @Override
     public int getCoverage(Day day) {
         if (day.isWeekend() || day.isHoliday()) {
@@ -25,7 +26,7 @@ public class JuniorAssistantEvening extends Shift {
         }
         return 1;
     }
-
+    */
     @Override
     public ShiftPeriod getPeriod() {
         return ShiftPeriod.WEEKDAY;
