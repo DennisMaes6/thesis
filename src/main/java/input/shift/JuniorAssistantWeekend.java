@@ -18,6 +18,7 @@ public class JuniorAssistantWeekend extends WeekendShift {
 
     public JuniorAssistantWeekend(double workload) {
         super(workload);
+        //super(3.0);
     }
 
     /*

@@ -257,10 +257,7 @@ public class Algorithm {
         
 
         while (schedule.nbAssignmentsOfShiftTypeOn(days.get(0), shift.getType()) < shift.getCoverage(days.get(0))) {
-            if(shift.getType() == ShiftType.TPHO){
-                System.out.println("TPHO!!!");
-                System.out.println(schedule.nbAssignmentsOfShiftTypeOn(days.get(0), shift.getType()));
-            }
+        
             Assistant assistant = randomAssistantForShift(invalidAssistants, shift);
             try {
                 schedule.assign(assistant, days, shift);

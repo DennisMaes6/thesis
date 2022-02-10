@@ -14,7 +14,10 @@ public class JuniorAssistantNightWeek extends WeekShift {
     );
 
     public JuniorAssistantNightWeek(double workload) {
+        
         super(workload);
+        //super(1.0);
+        
     }
     /*
     @Override

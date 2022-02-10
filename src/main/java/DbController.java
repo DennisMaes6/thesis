@@ -59,7 +59,7 @@ public class DbController {
     }
 
     private List<ShiftTypeModelParameters> getShiftTypeModelParameters() throws SQLException {
-        String sql = "SELECT shift_type, shift_workload, max_buffer FROM shift_type_parameters";
+        String sql = "SELECT shift_type, shift_workload, shift_coverage, max_buffer FROM shift_type_parameters";
         ResultSet rs = this.conn.createStatement().executeQuery(sql);
 
         List<ShiftTypeModelParameters> result = new ArrayList<>();
@@ -67,6 +67,7 @@ public class DbController {
             ShiftTypeModelParameters stmp = new ShiftTypeModelParameters(
                     ShiftType.valueOf(rs.getString("shift_type")),
                     rs.getFloat("shift_workload"),
+                    rs.getInt("shift_coverage"),
                     rs.getInt("max_buffer")
 
             );
