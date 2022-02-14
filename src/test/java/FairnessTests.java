@@ -19,6 +19,7 @@ public class FairnessTests {
     @Test
     void exampleTest() throws SQLException, DbControllerException{
         System.out.println("Test 1!");
+        System.out.println();
         DbController dbc = getDBController();
         InstanceData data = getInstanceData(dbc);
         ModelParameters params = getModelParams(dbc);

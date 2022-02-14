@@ -13,24 +13,7 @@ import input.shift.ShiftType;
 import input.time.Day;
 
 public class GeneticTests {
-    
 
-
-    @Test
-    void basicFitnessTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException{
-
-
-        DbController dbc = getDBController();
-        InstanceData data = getInstanceData(dbc);
-        ModelParameters params = getModelParams(dbc);
-
-
-        GA ga = new GA(data, params);
-        Schedule initSched = ga.generateSchedule();
-        dbc.putSchedule(initSched);
-
-        System.out.println("fitness score: " + initSched.getFitnessScore());
-    }
 
     @Test
     void geneticTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException{
@@ -48,12 +31,26 @@ public class GeneticTests {
         double mutationRate = 0;
         int nbMutations = 1;
 
-        
-
         Schedule result = ga.runGenetic(nbIterations, nbBest, nbParents, crossoverRate, mutationRate, nbMutations);
         System.out.println("Result: " + result.toString());
         System.out.println("fitness score genetic: " + result.getFitnessScore());
         dbc.putSchedule(result);
+    }
+
+    @Test
+    void basicFitnessTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException{
+
+
+        DbController dbc = getDBController();
+        InstanceData data = getInstanceData(dbc);
+        ModelParameters params = getModelParams(dbc);
+
+
+        GA ga = new GA(data, params);
+        Schedule initSched = ga.generateSchedule();
+        dbc.putSchedule(initSched);
+
+        System.out.println("fitness score: " + initSched.getFitnessScore());
     }
 
 
