@@ -1,4 +1,7 @@
-package input.shift;
+package input.shift.encoded;
+
+import input.shift.Shift;
+import input.shift.ShiftType;
 
 import java.util.Set;
 
@@ -24,6 +27,9 @@ public class EncodedShift {
         return shift;
     }
 
+    public void setAllowedWeeks(Set<Integer> allowedWeeks){
+        this.allowedWeeks = allowedWeeks;
+    }
     public Set<Integer> getAllowedWeeks() {
         return allowedWeeks;
     }
@@ -198,5 +204,9 @@ public class EncodedShift {
 
     public int getNbWeeks() {
         return nbWeeks;
+    }
+
+    public String toString(){
+        return getCodeName();
     }
 }
