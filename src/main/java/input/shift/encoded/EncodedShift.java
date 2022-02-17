@@ -49,18 +49,22 @@ public class EncodedShift {
         // Balance delen door 2 want bij het achtereenzetten van 2 shiften wordt van beiden de balance opgeteld
         switch(getShift().getPeriod()){
             case WEEK -> {
+                return 7;
+                /*
                 if(getAllowedWeeks().contains(1)) return 7 + (getBalance() / 2);
                 else if(getAllowedWeeks().contains(2)) return Math.min(getBalance(), 7) + 7 + (getBalance() / 2);
                 else if(getAllowedWeeks().contains(getNbWeeks() - 2)) return (getBalance() / 2) + 7 + Math.min(getBalance(), 7);
                 else if(getAllowedWeeks().contains(getNbWeeks() - 1)) return (getBalance() / 2) + 7;
-                else return (getBalance() / 2) * 2 + 7;
+                else return (getBalance() / 2) * 2 + 7; */
             }
             case WEEKEND -> {
+                return 2;
+                /*
                 if(getAllowedWeeks().contains(1)) return 1 + 2 + (getBalance() / 2);
                 else if(getAllowedWeeks().contains(2)) return Math.min(getBalance(), 9) + 2 + (getBalance() / 2);
                 else if(getAllowedWeeks().contains(getNbWeeks() - 2)) return (getBalance() / 2) + 2 + Math.min(getBalance(), 11);
                 else if(getAllowedWeeks().contains(getNbWeeks() - 1)) return (getBalance() / 2) + 2 + Math.min(getBalance(), 4);
-                else return (getBalance() / 2) * 2 + 2;
+                else return (getBalance() / 2) * 2 + 2; */
             }
             case HOLIDAY, WEEKDAY -> {
                 return 2 * (getBalance() / 2) + 1;
@@ -75,6 +79,11 @@ public class EncodedShift {
             result[0] = ShiftType.FREE;
             return result;
         }
+        for(int i = 0; i < getDuration(); i++){
+            result[i] = getShift().getType();
+        }
+        return result;
+        /*
         switch(getShift().getPeriod()){
             case WEEK -> {
                 return getWeekShiftTypes();
@@ -86,7 +95,7 @@ public class EncodedShift {
 
             }
         }
-        return result;
+        return result; */
     }
 
     private ShiftType[] getWeekShiftTypes(){

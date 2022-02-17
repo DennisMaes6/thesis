@@ -387,7 +387,9 @@ public class Schedule {
             if (shiftType == JAEV) {
                 return this.jaevShift.getDailyWorkload();      
             }
-   
+            if(!shifts.containsKey(shiftType)){
+                return 0.0;
+            }
             return shifts.get(shiftType).getDailyWorkload(); 
         }
     }

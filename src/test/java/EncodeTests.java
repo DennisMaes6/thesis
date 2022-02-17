@@ -1,10 +1,17 @@
+import exceptions.BadInstanceException;
 import exceptions.DbControllerException;
 import exceptions.NotSolvableException;
+import exceptions.ScheduleTooLongException;
 import input.InstanceData;
 import input.ModelParameters;
 import input.assistant.Assistant;
 import input.shift.*;
-import org.javatuples.Triplet;
+import input.shift.encoded.EncodedSchedule;
+import input.shift.encoded.EncodedShift;
+import input.shift.encoded.janw.A1;
+import input.shift.encoded.janw.A2;
+import input.shift.encoded.jawe.B1;
+import input.shift.encoded.jawe.B2;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -18,6 +25,72 @@ public class EncodeTests {
     private JuniorAssistantWeekend jawe = new JuniorAssistantWeekend(1);
     private FreeShift free = new FreeShift(1);
 
+
+    @Test
+    void crossoverEncodedScheduleTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException {
+        DbController dbc = getDBController();
+        InstanceData data = getInstanceData(dbc);
+        ModelParameters params = getModelParams(dbc);
+
+        GA ga = new GA(data, params);
+        Schedule schedule = ga.generateRandomSchedule();
+
+
+        dbc.putSchedule(schedule);
+    }
+
+
+    @Test
+    void generateEncodedScheduleTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException {
+        DbController dbc = getDBController();
+        InstanceData data = getInstanceData(dbc);
+        ModelParameters params = getModelParams(dbc);
+
+        GA ga = new GA(data, params);
+        Schedule schedule = ga.generateRandomSchedule();
+
+        dbc.putSchedule(schedule);
+    }
+
+
+    @Test
+    void generateRosterAssistantTest() throws SQLException, DbControllerException {
+        DbController dbc = getDBController();
+        InstanceData data = getInstanceData(dbc);
+        ModelParameters params = getModelParams(dbc);
+
+        Assistant assistantU = data.getAssistants().get(0);
+
+        GA ga = new GA(data, params);
+        EncodedSchedule result = ga.generateRandomIndividualSchedule(assistantU);
+        System.out.println(result);
+        System.out.println(result.getDuration());
+    }
+
+    @Test
+    void encodedScheduleTest(){
+        int nbDays = 91;
+        int balance = 12;
+        double workload = 1;
+        EncodedSchedule encodedSchedule = new EncodedSchedule(nbDays, balance);
+        B2 b2 = new B2(balance, nbDays / 7, workload);
+        B1 b1 = new B1(balance, nbDays/ 7, workload);
+
+        A2 a2 = new A2(balance, nbDays / 7, workload);
+        A1 a1 = new A1(balance, nbDays/ 7, workload);
+
+        try {
+            encodedSchedule.addEncodedShift(a2);
+            encodedSchedule.addEncodedShift(a1);
+            encodedSchedule.addEncodedShift(a1);
+            encodedSchedule.addEncodedShift(a1);
+            encodedSchedule.addEncodedShift(a1);
+        } catch (ScheduleTooLongException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(encodedSchedule.getDuration());
+    }
 
     @Test
     void testDecode1() throws SQLException, DbControllerException, NotSolvableException {
@@ -69,10 +142,10 @@ public class EncodeTests {
         assistantListMap.put(assistantA, assistantAShifts);
 
         Schedule schedule = new Schedule(data, params);
-        Schedule result = Decoder.decode(schedule, assistantListMap);
+        //Schedule result = Decoder.decode(schedule, assistantListMap);
 
         //System.out.println(result.toString());
-        dbc.putSchedule(result);
+        //dbc.putSchedule(result);
     }
 
     @Test
