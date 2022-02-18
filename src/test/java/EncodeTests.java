@@ -27,6 +27,82 @@ public class EncodeTests {
 
 
     @Test
+    void decodedGA() throws SQLException, DbControllerException, NotSolvableException {
+        DbController dbc = getDBController();
+        InstanceData data = getInstanceData(dbc);
+        ModelParameters params = getModelParams(dbc);
+
+        GA ga = new GA(data, params);
+
+        int nbIterations = 60;
+        int nbParents = 80;
+        int nbChildren = 80;
+        int nbBest = 50;
+        int nbMutations = 2;
+        double crossoverRate = 0.8;
+        double mutationRate = 0.4;
+
+        ga.runDecodedGA(nbIterations, nbParents, nbChildren, nbBest, nbMutations, crossoverRate, mutationRate);
+
+        //dbc.putSchedule(result);
+    }
+
+
+    @Test
+    void removeShiftTest() {
+        int nbDays = 91;
+        int balance = 12;
+        double workload = 1;
+        EncodedSchedule encodedSchedule = new EncodedSchedule(nbDays, balance);
+        B2 b2 = new B2(balance, nbDays / 7, workload);
+        B1 b1 = new B1(balance, nbDays/ 7, workload);
+
+        A2 a2 = new A2(balance, nbDays / 7, workload);
+        A1 a1 = new A1(balance, nbDays/ 7, workload);
+
+        try {
+            encodedSchedule.addEncodedShift(a2);
+            encodedSchedule.addEncodedShift(a1);
+            encodedSchedule.addEncodedShift(a1);
+            encodedSchedule.addEncodedShift(a1);
+
+        } catch (ScheduleTooLongException e) {
+            e.printStackTrace();
+        }
+
+
+        System.out.println(encodedSchedule);
+        encodedSchedule.removeEncodedShift(2);
+        System.out.println(encodedSchedule);
+    }
+
+    @Test
+    void insertIndexTest() throws SQLException, DbControllerException {
+        DbController dbc = getDBController();
+        InstanceData data = getInstanceData(dbc);
+        ModelParameters params = getModelParams(dbc);
+
+        GA ga = new GA(data, params);
+
+
+        EncodedSchedule testSchedule = ga.generateRandomIndividualSchedule(data.getAssistants().get(0));
+        System.out.println(testSchedule);
+        testSchedule.removeEncodedShift(1);
+        System.out.println(testSchedule);
+        ga.findInsertIndex(testSchedule, ShiftPeriod.WEEKEND);
+        ga.findInsertIndex(testSchedule, ShiftPeriod.WEEK);
+        testSchedule.removeEncodedShift(1);
+        testSchedule.removeEncodedShift(1);
+        System.out.println(testSchedule);
+        //EncodedSchedule newSchedule = ga.insertRandomShift(testSchedule, data.getAssistants().get(0));
+        for(int i = 0; i < 20; i++){
+            EncodedSchedule newSchedule = ga.insertRandomShift(testSchedule, data.getAssistants().get(0));
+            System.out.println(newSchedule);
+        }
+
+    }
+
+    @Test
     void crossoverEncodedScheduleTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException {
         DbController dbc = getDBController();
         InstanceData data = getInstanceData(dbc);

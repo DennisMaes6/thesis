@@ -46,6 +46,23 @@ public class EncodedSchedule {
     public List<EncodedShift> getEncodedShiftList() {
         return encodedShiftList;
     }
+    public List<EncodedShift> getFullAssignmentList(){
+        List<EncodedShift> result = new ArrayList<>();
+        for(EncodedShift encodedShift : getEncodedShiftList()){
+            if(encodedShift.getShift().getType() == ShiftType.FREE){
+                result.add(encodedShift);
+            } else {
+                for(int i = 0; i < encodedShift.getDuration(); i++){
+                    result.add(encodedShift);
+                }
+            }
+        }
+        int currentSize = result.size();
+        for(int i = currentSize ; i < getNbDays(); i++){
+            result.add(free);
+        }
+        return result;
+    }
 
     public void addEncodedShift(EncodedShift encodedShift) throws ScheduleTooLongException {
         int newDuration = getDuration();
@@ -84,25 +101,38 @@ public class EncodedSchedule {
                 addLastShift(encodedShift);
                 return;
             } else {
-                if(getEncodedShiftList().get(indexLastNotFreeShift).getShift().getPeriod() == ShiftPeriod.WEEK){
+                if(getEncodedShiftList().isEmpty()){
                     if(encodedShift.getShift().getPeriod() == ShiftPeriod.WEEK){ // WEEK TOEVOEGEN NA WEEK
-                        nbFreeDaysBefore = halfBalance + 2;
+                        nbFreeDaysBefore = 14;
                         nbFreeDaysAfter = halfBalance;
-                        newDuration += 7 + getBalance() + 2;
+                        newDuration += 7 + halfBalance + 14 + 2;
                     } else { // WEEKEND TOEVOEGEN NA WEEK
-                        nbFreeDaysBefore = halfBalance + 3;
+                        nbFreeDaysBefore = 15;
                         nbFreeDaysAfter = halfBalance;
-                        newDuration += 2 + getBalance() + 3;
+                        newDuration += 2 + halfBalance + 15 + 3;
                     }
+
                 } else {
-                    if(encodedShift.getShift().getPeriod() == ShiftPeriod.WEEK){  // WEEK TOEVOEGEN NA WEEKEND
-                        nbFreeDaysBefore = halfBalance + 6;
-                        nbFreeDaysAfter = halfBalance;
-                        newDuration += 7 + getBalance() + 6;
-                    } else { // WEEKEND TOEVOEGEN NA WEEKEND
-                        nbFreeDaysBefore = halfBalance;
-                        nbFreeDaysAfter = halfBalance;
-                        newDuration += 2 + getBalance() + 1;
+                    if (getEncodedShiftList().get(indexLastNotFreeShift).getShift().getPeriod() == ShiftPeriod.WEEK) {
+                        if (encodedShift.getShift().getPeriod() == ShiftPeriod.WEEK) { // WEEK TOEVOEGEN NA WEEK
+                            nbFreeDaysBefore = halfBalance + 2;
+                            nbFreeDaysAfter = halfBalance;
+                            newDuration += 7 + getBalance() + 2;
+                        } else { // WEEKEND TOEVOEGEN NA WEEK
+                            nbFreeDaysBefore = halfBalance + 3;
+                            nbFreeDaysAfter = halfBalance;
+                            newDuration += 2 + getBalance() + 3;
+                        }
+                    } else {
+                        if (encodedShift.getShift().getPeriod() == ShiftPeriod.WEEK) {  // WEEK TOEVOEGEN NA WEEKEND
+                            nbFreeDaysBefore = halfBalance + 6;
+                            nbFreeDaysAfter = halfBalance;
+                            newDuration += 7 + getBalance() + 6;
+                        } else { // WEEKEND TOEVOEGEN NA WEEKEND
+                            nbFreeDaysBefore = halfBalance;
+                            nbFreeDaysAfter = halfBalance;
+                            newDuration += 2 + getBalance() + 1;
+                        }
                     }
                 }
             //}
@@ -123,15 +153,38 @@ public class EncodedSchedule {
 
     }
 
-    private int getActualDuration(){
+    public void removeEncodedShift(int index){
+        List<EncodedShift> shiftList = getEncodedShiftList();
+        List<EncodedShift> newShiftList = new ArrayList<>();
+        int indexCounter = 0;
+        int currentIndex = 0;
+        for( EncodedShift shift : getEncodedShiftList()){
+            if(shift.getShift().getType() != ShiftType.FREE){
+                if(indexCounter == index){
+                    List<EncodedShift> before = shiftList.subList(0, currentIndex);
+                    List<EncodedShift> after = shiftList.subList(currentIndex + shift.getDuration(), shiftList.size());
+                    newShiftList.addAll(before);
+                    for(int i = 0; i < shift.getDuration(); i++){
+                        newShiftList.add(free);
+                    }
+                    newShiftList.addAll(after);
+                    break;
+                } else {
+                    indexCounter++;
+                }
+            }
+            currentIndex++;
+        }
+        encodedShiftList = newShiftList;
+    }
+
+    public int getActualDuration(){
         return getEncodedShiftList().stream().map(p -> p.getDuration()).mapToInt(Integer::intValue).sum();
         //return getEncodedShiftList().size();
     }
 
     private void addLastShift(EncodedShift encodedShift) throws ScheduleTooLongException {
-        int situation = -1;
-
-        int newDuration = getDuration();
+        int newDuration = getActualDuration();
         int nbFreeDaysBefore = 0;
         int nbFreeDaysAfter = 0;
 

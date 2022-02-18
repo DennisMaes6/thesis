@@ -1,12 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -207,6 +199,125 @@ public class GA {
     }
 
 
+    public void runDecodedGA(int nbIterations, int nbParents, int nbChildren, int nbBest, int nbMutations, double crossoverRate, double mutationRate) throws NotSolvableException {
+        List<Map<Assistant, EncodedSchedule>> parents = initParents(nbParents);
+
+        for(int i = 0; i < nbIterations; i++){
+            parents = generateCrossoverChildren(parents, nbChildren, crossoverRate);
+            parents = selectBestEncoded(parents, nbBest);
+            parents = generateMutatedChildren(parents, nbMutations, mutationRate);
+        }
+
+    }
+
+    public List<Map<Assistant, EncodedSchedule>> initParents(int nbParents){
+        List<Map<Assistant, EncodedSchedule>> assistantMapList = new ArrayList<>();
+        for(int i = 0; i < nbParents; i++){
+            Map<Assistant, EncodedSchedule> currentAssistantMap = getAssistantListMap();
+            assistantMapList.add(currentAssistantMap);
+        }
+        return assistantMapList;
+    }
+
+    public List<Map<Assistant, EncodedSchedule>> generateMutatedChildren(List<Map<Assistant, EncodedSchedule>> parents, int nbMutations, double mutationRate){
+        List<Map<Assistant, EncodedSchedule>> result = new ArrayList<>();
+        for(Map<Assistant, EncodedSchedule> encodedScheduleMap : parents){
+            Map<Assistant, EncodedSchedule> mutated;
+            if(random.nextDouble() < mutationRate){
+                mutated = generateMutation(encodedScheduleMap, nbMutations);
+            } else {
+                mutated = encodedScheduleMap;
+            }
+            result.add(mutated);
+        }
+        return result;
+    }
+
+    public Map<Assistant, EncodedSchedule> generateMutation(Map<Assistant, EncodedSchedule> encodedScheduleMap, int nbMutations){
+        List<Assistant> assistants = new ArrayList<>(encodedScheduleMap.keySet());
+        int counter = 0;
+        while(counter < nbMutations){
+            Assistant randomAssistantToMutate = assistants.get(random.nextInt(assistants.size()));
+            try {
+                EncodedSchedule mutatedSchedule = mutatedSchedule(encodedScheduleMap.get(randomAssistantToMutate), randomAssistantToMutate);
+                encodedScheduleMap.put(randomAssistantToMutate, mutatedSchedule);
+                counter++;
+            } catch (ScheduleTooLongException ignored) {}
+
+        }
+        return encodedScheduleMap;
+    }
+
+    public List<Map<Assistant, EncodedSchedule>> generateCrossoverChildren(List<Map<Assistant, EncodedSchedule>> parents, int nbChildren, double crossoverRate){
+        List<Map<Assistant, EncodedSchedule>> result = new ArrayList<>();
+        int count = 0;
+        int currentNextBest = 0;
+        while(count < nbChildren){
+            Map<Assistant, EncodedSchedule> newChild;
+            if(random.nextDouble() < crossoverRate){
+                // Als getal kleiner is dan crossover rate: combineer 2 random parents
+                Map<Assistant, EncodedSchedule> parent1 = parents.get(random.nextInt(parents.size() - 1));
+                Map<Assistant, EncodedSchedule> parent2 = parents.get(random.nextInt(parents.size() - 1));
+                newChild = generateCrossover(parent1, parent2);
+            } else {
+                newChild = parents.get(currentNextBest);
+                if(currentNextBest == parents.size() / 2 ){ // als de beste helft bereikt is, terug naar de eerste gaan.
+                    currentNextBest = 0;
+                } else {
+                    currentNextBest++;
+                }
+            }
+            result.add(newChild);
+            count++;
+        }
+        return result;
+    }
+
+    public Map<Assistant, EncodedSchedule> generateCrossover(Map<Assistant, EncodedSchedule> parent1, Map<Assistant, EncodedSchedule> parent2){
+        Map<Assistant, EncodedSchedule> result = new HashMap<>();
+        for(Assistant assistant : parent1.keySet()){
+            EncodedSchedule p1 = parent1.get(assistant);
+            EncodedSchedule p2 = parent2.get(assistant);
+            try {
+                EncodedSchedule child = crossoverSchedule(p1, p2);
+                result.put(assistant, child);
+            } catch (ScheduleTooLongException e) {
+                EncodedSchedule child;
+                if(random.nextBoolean()){
+                    child = p1;
+                } else {
+                    child = p2;
+                }
+                result.put(assistant, child);
+            }
+        }
+        return result;
+    }
+
+    public List<Map<Assistant, EncodedSchedule>> selectBestEncoded(List<Map<Assistant, EncodedSchedule>> encodedSchedules, int nbBest){
+        Map<Map<Assistant, EncodedSchedule>, Double> scores = new HashMap<>();
+        for(Map<Assistant, EncodedSchedule> encodedScheduleMap : encodedSchedules){
+            double currentScore = getFitnessScore(encodedScheduleMap);
+            scores.put(encodedScheduleMap, currentScore);
+        }
+        Map<Map<Assistant, EncodedSchedule>, Double> resultMap =
+                scores.entrySet().stream()
+                        .sorted(Map.Entry.comparingByValue(Comparator.naturalOrder()))
+                        .limit(nbBest)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+        double avg = 0.0;
+        for(double cs : scores.values()){
+            avg += cs;
+        }
+        avg = avg / scores.values().size();
+
+        System.out.println("SCORES: " + resultMap.values() + " | " + avg);
+
+        List<Map<Assistant, EncodedSchedule>> result = new ArrayList<>(resultMap.keySet());
+        return result;
+    }
+
     public EncodedSchedule generateRandomIndividualSchedule(Assistant assistant){
 
         EncodedSchedule result = new EncodedSchedule(data.getDays().size(), parameters.getMinBalance());
@@ -259,14 +370,7 @@ public class GA {
             result.addEncodedShift(lastShift);
         } catch (ScheduleTooLongException ignored) {}
 
-        try {
-            EncodedSchedule mutated = mutatedSchedule(result, assistant);
-            System.out.println(result);
-            System.out.println(mutated + " MUTATED");
-        } catch (ScheduleTooLongException e) {
-            e.printStackTrace();
-        }
-
+        //System.out.println(result);
         return result;
     }
 
@@ -275,6 +379,16 @@ public class GA {
         List<EncodedShift> newShifts = new ArrayList<>();
         int size1 = e1.getShiftsWithoutFree().size();
         int size2 = e2.getShiftsWithoutFree().size();
+
+        System.out.println("-------------");
+        System.out.println("e1: " + e1.getShiftsWithoutFree());
+        System.out.println("e2: " + e2.getShiftsWithoutFree());
+        if(size1 == 0){
+            return e2;
+        }
+        if(size2 == 0){
+            return e1;
+        }
 
         int resultSize = Math.min(size1, size2);
 
@@ -295,136 +409,279 @@ public class GA {
         if(random.nextBoolean()){
             newShifts.add(e1.getShiftsWithoutFree().get(size1 - 1));
         } else {
-            newShifts.add(e1.getShiftsWithoutFree().get(size2 - 1));
+            newShifts.add(e2.getShiftsWithoutFree().get(size2 - 1));
         }
 
         return new EncodedSchedule(e1.getNbDays(), e1.getBalance(), newShifts);
     }
 
     public EncodedSchedule mutatedSchedule(EncodedSchedule e1, Assistant assistant) throws ScheduleTooLongException {
-        List<EncodedShift> shiftList = e1.getShiftsWithoutFree();
-        List<EncodedShift> mutatedShiftList = new ArrayList<EncodedShift>(shiftList);
-        int indexToReplace = random.nextInt(shiftList.size());
 
-
-        List<EncodedShift> newShifts;
-
-        if(indexToReplace == 0){
-            //mutatedShiftList = mutatedShiftList.subList(1, mutatedShiftList.size() );
-            try {
-                newShifts = weekOneShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
-
-                EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
-
-                mutatedShiftList.set(0, nShift);
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-
-                return result;
-            } catch (ScheduleTooLongException ignored) {}
-            try {
-                newShifts = weekTwoShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
-
-                EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
-                mutatedShiftList.set(0, nShift);
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-                return result;
-            } catch (ScheduleTooLongException ignored) {}
-            try {
-                newShifts = restEncodedShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
-
-                mutatedShiftList.set(0, newShifts.get(random.nextInt(newShifts.size())));
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-                return result;
-            } catch (ScheduleTooLongException ignored) {
-                System.out.println("Failed");
+        int caseInt = random.nextInt(3);
+        if(caseInt == 0){
+            List<EncodedShift> shiftList = e1.getShiftsWithoutFree();
+            List<EncodedShift> mutatedShiftList = new ArrayList<EncodedShift>(shiftList);
+            if(shiftList.isEmpty()){
                 return e1;
             }
-        } else if(indexToReplace == shiftList.size() - 1){
-            try {
-                newShifts = weekEndMinusTwoShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
+            int indexToReplace = random.nextInt(shiftList.size());
 
-                //mutatedShiftList.add(newShifts.get(random.nextInt(newShifts.size())));
-                EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
-                mutatedShiftList.set(mutatedShiftList.size() - 1, nShift);
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-                return result;
-            } catch (ScheduleTooLongException ignored) {}
-            try {
-                newShifts = weekEndMinusOneShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
 
-                EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
-                mutatedShiftList.set(mutatedShiftList.size() - 1, nShift);
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-                return result;
-            } catch (ScheduleTooLongException ignored) {}
-            try {
-                newShifts = restEncodedShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
-                EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
-                mutatedShiftList.set(mutatedShiftList.size() - 1, nShift);
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-                return result;
-            } catch (ScheduleTooLongException ignored) {
-                System.out.println("Failed");
-                return e1;
-            }
-        } else {
-            try {
-                newShifts = restEncodedShifts
-                        .stream()
-                        .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
-                        .collect(Collectors.toList());
+            List<EncodedShift> newShifts;
 
-                EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+            if(indexToReplace == 0){
+                //mutatedShiftList = mutatedShiftList.subList(1, mutatedShiftList.size() );
+                try {
+                    newShifts = weekOneShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
 
-                mutatedShiftList.set(indexToReplace, nShift);
-                EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
-                return result;
-            } catch (ScheduleTooLongException ignored) {
-                System.out.println("Failed");
-                return e1;
+                    EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+
+                    mutatedShiftList.set(0, nShift);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+
+                    return result;
+                } catch (ScheduleTooLongException ignored) {}
+                try {
+                    newShifts = weekTwoShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
+
+                    EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+                    mutatedShiftList.set(0, nShift);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+                    return result;
+                } catch (ScheduleTooLongException ignored) {}
+                try {
+                    newShifts = restEncodedShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
+
+                    mutatedShiftList.set(0, newShifts.get(random.nextInt(newShifts.size())));
+                    System.out.println(mutatedShiftList);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+                    return result;
+                } catch (ScheduleTooLongException ignored) {
+                    //System.out.println("Failed");
+                    throw new ScheduleTooLongException("Mutation first place failed.");
+                }
+            } else if(indexToReplace == shiftList.size() - 1){
+                try {
+                    newShifts = weekEndMinusTwoShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
+
+                    //mutatedShiftList.add(newShifts.get(random.nextInt(newShifts.size())));
+                    EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+                    mutatedShiftList.set(mutatedShiftList.size() - 1, nShift);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+                    return result;
+                } catch (ScheduleTooLongException ignored) {}
+                try {
+                    newShifts = weekEndMinusOneShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
+
+                    EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+                    mutatedShiftList.set(mutatedShiftList.size() - 1, nShift);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+                    return result;
+                } catch (ScheduleTooLongException ignored) {}
+                try {
+                    newShifts = restEncodedShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
+                    EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+                    mutatedShiftList.set(mutatedShiftList.size() - 1, nShift);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+                    return result;
+                } catch (ScheduleTooLongException ignored) {
+                    throw new ScheduleTooLongException("Mutation last place failed");
+                }
+            } else {
+                try {
+                    newShifts = restEncodedShifts
+                            .stream()
+                            .filter(p -> p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                            .collect(Collectors.toList());
+
+                    EncodedShift nShift = newShifts.get(random.nextInt(newShifts.size()));
+
+                    mutatedShiftList.set(indexToReplace, nShift);
+                    EncodedSchedule result = new EncodedSchedule(e1.getNbDays(), e1.getBalance(), mutatedShiftList);
+                    return result;
+                } catch (ScheduleTooLongException ignored) {
+                    throw new ScheduleTooLongException("Mutation middle failed");
+                }
             }
         }
+        else if(caseInt == 1){
+            if(!e1.getEncodedShiftList().isEmpty()){
+                int randomShiftIndex = random.nextInt(e1.getEncodedShiftList().size());
+                e1.removeEncodedShift(randomShiftIndex);
+            }
+            return e1;
+        } else {
+            return insertRandomShift(e1, assistant);
+        }
+
 
     } // TODO: klopt nog niet
 
+    public List<Integer> findInsertIndex(EncodedSchedule e1, ShiftPeriod period){
+        List<Integer> possibleIndex = new ArrayList<>();
+        int nbDays = e1.getNbDays();
+        int balance = e1.getBalance();
+        int currentIndex;
+        List<EncodedShift> encodedShifts = e1.getFullAssignmentList();
+
+        if(period == ShiftPeriod.WEEKEND){
+            currentIndex = 1;
+            for(int i = currentIndex; i < nbDays; i += 7){
+                // if(i > encodedShifts.size()) break;
+                List<EncodedShift> freeList = new ArrayList<>();
+                if(encodedShifts.get(i).getShift().getType() == ShiftType.FREE){
+                    if(i == 1){
+                        freeList.addAll(encodedShifts.subList(0, 2 + balance));
+                    } else if(i == 1 + 7){
+                        freeList.addAll(encodedShifts.subList(0, 8 + 2 + balance));
+                    } else if(i == 1 +  nbDays - 14 ){
+                        freeList.addAll(encodedShifts.subList(i - balance, i + 6 + 7));
+                    } else if(i == 1 + nbDays - 7 ){
+                        freeList.addAll(encodedShifts.subList(i - balance, nbDays));
+                    } else {
+                        //if(i + 2 + balance > encodedShifts.size()) continue;
+                        freeList.addAll(encodedShifts.subList(i - balance, i + 2 + balance));
+                    }
+                    Set<ShiftType> freeSet = new HashSet<ShiftType>(freeList.stream().map(p -> p.getShift().getType()).collect(Collectors.toList())) ;
+                    if(freeSet.size() == 1){
+                        possibleIndex.add(i);
+                    }
+                }
+            }
+        } else if(period == ShiftPeriod.WEEK){
+
+            currentIndex = 0;
+            for(int i = currentIndex; i < nbDays; i += 7){
+               // if(i > encodedShifts.size()) break;
+                List<EncodedShift> freeList = new ArrayList<>();
+                if(encodedShifts.get(i).getShift().getType() == ShiftType.FREE){
+                    if(i == 0){
+                        freeList.addAll(encodedShifts.subList(0, 7 + balance));
+                    } else if(i == 7){
+                        freeList.addAll(encodedShifts.subList(0, 7 + 7 + balance));
+                    } else if(i == nbDays - 14 ){
+                        freeList.addAll(encodedShifts.subList(i - balance, i + 7 + 7));
+                    } else if(i == nbDays - 7 ){
+                        freeList.addAll(encodedShifts.subList(i - balance, nbDays));
+                    } else {
+                        //if(i + 7 + balance > encodedShifts.size()) continue;
+                        freeList.addAll(encodedShifts.subList(i - balance, i + 7 + balance));
+                    }
+                    Set<ShiftType> freeSet = new HashSet<ShiftType>(freeList.stream().map(p -> p.getShift().getType()).collect(Collectors.toList())) ;
+                    if(freeSet.size() == 1){
+                        possibleIndex.add(i);
+                    }
+                }
+            }
+        }
+        return possibleIndex;
+    }
+
+
+    public EncodedSchedule insertRandomShift(EncodedSchedule e1, Assistant assistant){ // TODO: random kiezen tussen week/weekend
+        List<Integer> possibleIndex = findInsertIndex(e1, ShiftPeriod.WEEK);
+        ShiftPeriod periodAdded;
+        if(possibleIndex.isEmpty()){
+            possibleIndex = findInsertIndex(e1, ShiftPeriod.WEEKEND);
+            if(possibleIndex.isEmpty()){
+                return e1;
+            }
+            else {
+                periodAdded = ShiftPeriod.WEEKEND;
+            }
+        } else {
+            periodAdded = ShiftPeriod.WEEK;
+        }
+
+        List<EncodedShift> shiftsToChooseFrom;
+        int randomIndex = possibleIndex.get(random.nextInt(possibleIndex.size()));
+        if(randomIndex < 2){
+            shiftsToChooseFrom = weekOneShifts;
+        } else if(randomIndex < 9){
+            shiftsToChooseFrom = weekTwoShifts;
+        } else if(randomIndex >= e1.getNbDays() - 7){
+            shiftsToChooseFrom = weekEndMinusOneShifts;
+        } else if(randomIndex >= e1.getNbDays() - 14){
+            shiftsToChooseFrom = weekEndMinusTwoShifts;
+        } else {
+            shiftsToChooseFrom = restEncodedShifts;
+        }
+        shiftsToChooseFrom = shiftsToChooseFrom
+                .stream()
+                .filter(p -> p.getShift().getPeriod() == periodAdded && p.getShift().getAllowedAssistantTypes().contains(assistant.getType()))
+                .collect(Collectors.toList());
+        EncodedShift newShift = shiftsToChooseFrom.get(random.nextInt(shiftsToChooseFrom.size()));
+        List<EncodedShift> newEncodedShifts = e1.getFullAssignmentList();
+        for(int i = randomIndex; i < randomIndex + newShift.getDuration(); i++){
+            newEncodedShifts.set(i, newShift);
+        }
+
+        newEncodedShifts = newEncodedShifts.stream().filter(p -> p.getShift().getType() != ShiftType.FREE).collect(Collectors.toList());
+        List<EncodedShift> newShortenedShiftList = new ArrayList<>();
+        int currentIndex = 0;
+        while(currentIndex < newEncodedShifts.size()){
+            newShortenedShiftList.add(newEncodedShifts.get(currentIndex));
+            currentIndex += newEncodedShifts.get(currentIndex).getDuration();
+        }
+
+        System.out.println(e1.getShiftsWithoutFree());
+        System.out.println(newShortenedShiftList);
+        try {
+            return new EncodedSchedule(e1.getNbDays(), e1.getBalance(), newShortenedShiftList);
+        } catch (ScheduleTooLongException e) {
+            e.printStackTrace();
+        }
+        return e1;
+    }
+
+    public double getFitnessScore(Map<Assistant, EncodedSchedule> encodedSchedules){
+        Schedule decoded = null;
+        try {
+            decoded = Decoder.decode2(new Schedule(data, parameters), encodedSchedules);
+        } catch (NotSolvableException e) {
+            e.printStackTrace();
+        }
+        return decoded.getFitnessScore();
+    }
 
     private boolean assistantAllowed(Assistant assistant, EncodedShift encodedShift){
         return encodedShift.getShift().getAllowedAssistantTypes().contains(assistant.getType());
     }
 
-
-    public Schedule generateRandomSchedule() throws NotSolvableException {
-        Schedule schedule = new Schedule(data, parameters);
+    private Map<Assistant, EncodedSchedule> getAssistantListMap(){
         Map<Assistant, EncodedSchedule> assistantListMap = new HashMap<>();
 
         for(Assistant assistant : data.getAssistants()){
             EncodedSchedule currentSchedule = generateRandomIndividualSchedule(assistant);
             assistantListMap.put(assistant, currentSchedule);
-            System.out.println(currentSchedule);
         }
+        return assistantListMap;
+    }
 
+    public Schedule generateRandomSchedule() throws NotSolvableException {
+        Schedule schedule = new Schedule(data, parameters);
+        Map<Assistant, EncodedSchedule> assistantListMap = getAssistantListMap();
         Schedule result = Decoder.decode2(schedule, assistantListMap);
         return result;
     }
-
 
 
     public Schedule runGenetic(int nbIterations, int nbBest, int nbParents, double crossoverRate, double mutationRate, int nbMutations) throws NotSolvableException, BadInstanceException{
