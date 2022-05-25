@@ -29,7 +29,7 @@ public class JuniorAssistantEvening extends Shift {
     */
     @Override
     public ShiftPeriod getPeriod() {
-        return ShiftPeriod.WEEKDAY;
+        return ShiftPeriod.WEEK;
     }
 
     @Override

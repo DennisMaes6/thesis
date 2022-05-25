@@ -4,5 +4,7 @@ public enum ShiftPeriod {
     WEEK,
     WEEKEND,
     HOLIDAY,
-    WEEKDAY
+    WEEKDAY,
+    FRIDAY,
+    WEEK_WITHOUT_FRIDAY
 }

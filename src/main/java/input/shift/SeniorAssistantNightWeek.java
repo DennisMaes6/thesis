@@ -1,19 +1,24 @@
 package input.shift;
 
 import input.assistant.AssistantType;
-import input.time.Day;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JuniorAssistantNightWeek extends WeekShift {
+public class SeniorAssistantNightWeek extends WeekShift {
 
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
-            Collections.singleton(AssistantType.JA)
+            Arrays.asList(
+                    AssistantType.SA,
+                    AssistantType.SA_F,
+                    AssistantType.SA_NEO,
+                    AssistantType.SA_F_NEO
+            )
     );
 
-    public JuniorAssistantNightWeek(double workload) {
+    public SeniorAssistantNightWeek(double workload) {
         
         super(workload);
         //super(1.0);
@@ -34,6 +39,6 @@ public class JuniorAssistantNightWeek extends WeekShift {
 
     @Override
     public ShiftType getType() {
-        return ShiftType.JANW;
+        return ShiftType.SANW;
     }
 }

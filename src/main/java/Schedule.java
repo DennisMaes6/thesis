@@ -1,4 +1,3 @@
-import exceptions.BadInstanceException;
 import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ShiftTypeModelParameters;
@@ -24,6 +23,8 @@ public class Schedule {
     private final Map<ShiftType, Shift> shifts = new HashMap<>();
     public final ShiftType[][] schedule;
     private final JuniorAssistantEvening jaevShift;
+    private final double maxCoverage;
+
 
     public Schedule(InstanceData data, ModelParameters parameters) throws NotSolvableException {
         this.data = data;
@@ -50,6 +51,7 @@ public class Schedule {
         if (!isSolvable()) {
             throw new NotSolvableException("not solvable!");
         } */
+        maxCoverage = 0; // niet meer gebruikt voorlopig
     }
 
     public Schedule(InstanceData data, ModelParameters parameters, List<Triplet<Integer, Integer, ShiftType>> assignments){
@@ -58,11 +60,12 @@ public class Schedule {
         this.schedule = new ShiftType[getNbAssistants()][getNbDays()];
         this.jaevShift = new JuniorAssistantEvening(1.0);
         initializeShifts(parameters.getShiftTypeModelParameters());
-        
+
         initializeJaevShift(1, 1); // TODO: niet hardcoden
 
         fillScheduleFromInput(assignments);
 
+        maxCoverage = 0; // niet meer gebruikt voorlopig
     }
 
 
@@ -93,7 +96,7 @@ public class Schedule {
         for (ShiftTypeModelParameters stp : stps) {
             switch (stp.getShiftType()) {
 
-                case JANW -> initializeJuniorAssistantNightWeekShift(stp.getWorkload(), stp.getCoverage());
+                case SANW -> initializeJuniorAssistantNightWeekShift(stp.getWorkload(), stp.getCoverage());
                 case JAWE -> initializeJuniorAssistantWeekendShift(stp.getWorkload(), stp.getCoverage());
                 case JAHO -> initializeJuniorAssistantHolidayShift(stp.getWorkload(), stp.getCoverage());
                 case SAEW -> initializeSeniorAssistantEveningWeekShift(stp.getWorkload(), stp.getCoverage());
@@ -101,8 +104,12 @@ public class Schedule {
                 case SAHO -> initializeSeniorAssistantHolidayShift(stp.getWorkload(), stp.getCoverage());
                 case TPWE -> initializeTransportWeekendShift(stp.getWorkload(), stp.getCoverage());
                 case TPHO -> initializeTransportHolidayShift(stp.getWorkload(), stp.getCoverage());
-                case CALL -> initializeCallShift(stp.getWorkload(), stp.getCoverage());
-                
+                //case CALL -> initializeCallShift(stp.getWorkload(), stp.getCoverage());
+                case JAEV -> initializeJuniorAssistantEvening(stp.getWorkload(), stp.getCoverage());
+                case TPNF -> initializeTransportNightFriday(stp.getWorkload(), stp.getCoverage());
+                case SAEV1 -> initializeSeniorEveningMondayThursday(stp.getWorkload(), stp.getCoverage());
+                case SAEV2 -> initializeSeniorEveningFriday(stp.getWorkload(), stp.getCoverage());
+
                 //case JANW -> this.shifts.put(JANW, new JuniorAssistantNightWeek(stp.getWorkload()));
                 //case JAWE -> this.shifts.put(JAWE, new JuniorAssistantWeekend(stp.getWorkload()));
                 //case JAHO -> this.shifts.put(JAHO, new JuniorAssistantHoliday(stp.getWorkload()));
@@ -120,18 +127,60 @@ public class Schedule {
     private void initializeJaevShift(double workload, int coverage){
 
         for(Day d : this.data.getDays()){
-            if(!d.isHoliday() && !d.isWeekend()){
+            if(!d.isHoliday() ){
                 this.jaevShift.setCoverage(d, coverage);
             } else {
                 this.jaevShift.setCoverage(d, 0);
-            }    
+            }
         }
-
     }
-    private void initializeJuniorAssistantNightWeekShift(double workload, int coverage){
-        JuniorAssistantNightWeek newShift = new JuniorAssistantNightWeek(workload);
+
+
+
+    private void initializeTransportNightFriday(double workload, int coverage){
+        TransportNightFriday newShift = new TransportNightFriday(workload);
         for(Day d : this.data.getDays()){
-            newShift.setCoverage(d, coverage);
+            if(d.getDay0fWeek() == "Fri" && !d.isHoliday() ){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }
+        }
+        this.shifts.put(TPNF, newShift);
+    }
+
+    private void initializeSeniorEveningFriday(double workload, int coverage){
+        SeniorAssistantEvening2 newShift = new SeniorAssistantEvening2(workload);
+        for(Day d : this.data.getDays()){
+            if(d.getDay0fWeek() == "Fri" && !d.isHoliday() ){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }
+        }
+        this.shifts.put(SAEV2, newShift);
+    }
+
+    private void initializeSeniorEveningMondayThursday(double workload, int coverage){
+        SeniorAssistantEvening1 newShift = new SeniorAssistantEvening1(workload);
+        for(Day d : this.data.getDays()){
+            if(d.isHoliday() || d.isWeekend() || d.getDay0fWeek() == "Fri" ){
+                newShift.setCoverage(d, 0);
+            } else {
+                newShift.setCoverage(d, coverage);
+            }
+        }
+        this.shifts.put(SAEV1, newShift);
+    }
+
+    private void initializeJuniorAssistantNightWeekShift(double workload, int coverage){
+        SeniorAssistantNightWeek newShift = new SeniorAssistantNightWeek(workload);
+        for(Day d : this.data.getDays()){
+            if(!d.isHoliday()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }
             /*
             if(!d.isHoliday() ){
             //if(!d.isHoliday() && !d.isWeekend()){
@@ -140,7 +189,7 @@ public class Schedule {
                 newShift.setCoverage(d, 0);
             }     */
         }
-        this.shifts.put(JANW, newShift);
+        this.shifts.put(SANW, newShift);
     }
     private void initializeJuniorAssistantWeekendShift(double workload, int coverage){
         JuniorAssistantWeekend newShift = new JuniorAssistantWeekend(workload);
@@ -149,10 +198,28 @@ public class Schedule {
                 newShift.setCoverage(d, coverage);
             } else {
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
         this.shifts.put(JAWE, newShift);
     }
+
+    private void initializeJuniorAssistantEvening(double workload, int coverage){
+
+        JuniorAssistantEvening newShift = new JuniorAssistantEvening(workload);
+        for(Day d : this.data.getDays()){
+
+            if(!d.isHoliday() ){
+
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }
+
+        }
+
+        this.shifts.put(JAEV, newShift);
+    }
+
     private void initializeJuniorAssistantHolidayShift(double workload, int coverage){
         JuniorAssistantHoliday newShift = new JuniorAssistantHoliday(workload);
         for(Day d : this.data.getDays()){
@@ -160,14 +227,18 @@ public class Schedule {
                 newShift.setCoverage(d, coverage);
             } else {
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
         this.shifts.put(JAHO, newShift);
     }
     private void initializeSeniorAssistantEveningWeekShift(double workload, int coverage){
-        SeniorAssistantEveningWeek newShift = new SeniorAssistantEveningWeek(workload);        
+        SeniorAssistantEveningWeek newShift = new SeniorAssistantEveningWeek(workload);
         for(Day d : this.data.getDays()){
-            newShift.setCoverage(d, coverage);
+            if(!d.isHoliday()){
+                newShift.setCoverage(d, coverage);
+            } else {
+                newShift.setCoverage(d, 0);
+            }
             /*
             if(!d.isHoliday() ){
             //if(!d.isHoliday() && !d.isWeekend()){
@@ -175,7 +246,7 @@ public class Schedule {
             } else {
                 newShift.setCoverage(d, 0);
             }    */
-        } 
+        }
         this.shifts.put(SAEW, newShift);
     }
     private void initializeSeniorAssistantWeekendShift(double workload, int coverage){
@@ -185,7 +256,7 @@ public class Schedule {
                 newShift.setCoverage(d, coverage);
             } else {
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
         this.shifts.put(SAWE, newShift);
     }
@@ -196,7 +267,7 @@ public class Schedule {
                 newShift.setCoverage(d, coverage);
             } else {
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
         this.shifts.put(SAHO, newShift);
     }
@@ -209,8 +280,9 @@ public class Schedule {
                 newShift.setCoverage(d, coverage);
             } else {
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
+
         this.shifts.put(TPWE, newShift);
     }
     private void initializeTransportHolidayShift(double workload, int coverage){
@@ -220,21 +292,22 @@ public class Schedule {
                 newShift.setCoverage(d, coverage);
             } else {
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
         this.shifts.put(TPHO, newShift);
     }
-    private void initializeCallShift(double workload, int coverage){
+    /*private void initializeCallShift(double workload, int coverage){
         Call newShift = new Call(workload);
         for(Day d : this.data.getDays()){
-            if(!d.isHoliday() && !d.isWeekend()){
+            if(!d.isHoliday() ){
                 newShift.setCoverage(d, coverage);
             } else {
+
                 newShift.setCoverage(d, 0);
-            }    
+            }
         }
         this.shifts.put(CALL, newShift);
-    }
+    } */
 
 
     private void initMaxAssignments(List<ShiftTypeModelParameters> stps) {
@@ -264,7 +337,7 @@ public class Schedule {
                     .filter(a -> a.availableOn(week.getDays()))
                     .collect(Collectors.toSet());
 
-            for (ShiftType shiftType : List.of(JANW, SAEW, CALL)) {
+            for (ShiftType shiftType : List.of(SANW, SAEW)) {
                 List<Assistant> allowedAssistants = assistants
                         .stream()
                         .filter(a -> shifts.get(shiftType).getAllowedAssistantTypes().contains(a.getType()))
@@ -282,12 +355,12 @@ public class Schedule {
                         .stream()
                         .filter(a -> shifts.get(shiftType).getAllowedAssistantTypes().contains(a.getType()))
                         .collect(Collectors.toList());
-               
+
                 if(!week.getWeekendDays().isEmpty()){
                     if (allowedAssistants.size() < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0))) {
                         return false;
                     }
-                    
+
                     for (int i = 0; i < shifts.get(shiftType).getCoverage(week.getWeekendDays().get(0)); i++) {
                         assistants.remove(allowedAssistants.get(i));
                     }
@@ -326,12 +399,24 @@ public class Schedule {
         return true;
     }
 
-    // First version: simply count the nb of shifts that haven't been assigned or are assigned too much.
+
+    private double initializeMaxFitnessScore(){
+        double result = 0.0;
+        for(Day day : this.data.getDays()){
+            for(Shift sh : this.getShifts().values()){
+                result += sh.getCoverage(day) * sh.getDailyWorkload();
+            }
+        }
+        return result;
+    }
+
+    // First version was: simply count the nb of shifts that haven't been assigned or are assigned too much.
+    // Second version: simply count the nb of shifts that haven't been assigned multiplied with their workload --> Doesn't work. Back to version 1. Is nodig om balance mee te optimaliseren
     public Double getFitnessScore(){
         double result = 0.0;
         for(Day day : this.data.getDays()){
             for(Shift sh : this.getShifts().values()){
-                result += Math.abs( sh.getCoverage(day) - nbAssignmentsOfShiftTypeOn(day, sh.getType()));
+                result += Math.abs( sh.getCoverage(day) - nbAssignmentsOfShiftTypeOn(day, sh.getType())) ;
             }
         }
 
@@ -342,7 +427,7 @@ public class Schedule {
     public double fairnessScore() {
         List<Double> workloadPerAssistant = new ArrayList<>();
         for (Assistant assistant : data.getAssistants()) {
-            
+
             workloadPerAssistant.add(workloadForAssistant(assistant));
         }
         return Collections.max(workloadPerAssistant) - Collections.min(workloadPerAssistant)
@@ -383,12 +468,12 @@ public class Schedule {
             return 0.0;
         else {
             //return 1.0;
-            
+
             if (shiftType == JAEV) {
-                return this.jaevShift.getDailyWorkload();      
+                return this.jaevShift.getDailyWorkload();
             }
-   
-            return shifts.get(shiftType).getDailyWorkload(); 
+
+            return shifts.get(shiftType).getDailyWorkload();
         }
     }
 
@@ -429,8 +514,8 @@ public class Schedule {
                 }
             }
         }
-
-        return (Collections.min(idleStreaks) - idleStreaks.stream().filter(b -> b.equals(Collections.min(idleStreaks))).count() / 100.0);
+        return 0;
+        //return (Collections.min(idleStreaks) - idleStreaks.stream().filter(b -> b.equals(Collections.min(idleStreaks))).count() / 100.0);
     }
 
     public int jaevBalanceScore() {
@@ -513,7 +598,7 @@ public class Schedule {
         if (nbFreeDaysAfter(assistant, days.get(days.size()-1)) < parameters.getMinBalance()) {
             throw new InvalidDayException("Assignment violates min balance");
         }
-        
+
         if (nbAssignmentsOfShiftType(assistant, shift) >= shift.getMaxAssignments()) {
             throw new InvalidShiftTypeException("Assignment violates max assignments");
         }
@@ -633,12 +718,12 @@ public class Schedule {
     }
 
     private List<Assistant> getAllowedAssistants(ShiftType st) {
-        if (st == JAEV) {
+ /*       if (st == JAEV) {
             return data.getAssistants()
                     .stream()
                     .filter(a -> this.jaevShift.getAllowedAssistantTypes().contains(a.getType()))
                     .collect(Collectors.toList());
-        }
+        } */
         return data.getAssistants()
                 .stream()
                 .filter(a -> shifts.get(st).getAllowedAssistantTypes().contains(a.getType()))
@@ -867,5 +952,9 @@ public class Schedule {
 
         for (Day day : days)
             this.schedule[assistant.getIndex()][day.getIndex()] = shift.getType();
+    }
+
+    public double getMaxCoverage() {
+        return maxCoverage;
     }
 }
