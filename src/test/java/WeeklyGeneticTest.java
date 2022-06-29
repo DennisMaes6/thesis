@@ -28,20 +28,20 @@ public class WeeklyGeneticTest {
 
             Genetic genetic = new Genetic(data, params);
 
-            int nbIterations = 75;
-            int nbParents = 3600;
-            int nbBest = 1000;
-            double crossoverRate = 0.9;
-            double mutationRate = 0.9;
+            int nbIterations = 100;
+            int nbParents = 4000;
+            int nbBest = 300;
+            double crossoverRate = 0.6;
+            double mutationRate = 0.6;
 
-            double[] weightsLO = {4, 1, 1}; // LINKSONDER
-            double[] weightsMO = { 1, 4, 1}; // MIDDENONDER
-            double[] weightsRO = {1, 1, 4}; // RECHTSONDER
-            double[] weightsLM = {4, 1, 4}; // LINKSMIDDEN
-            double[] weightsMM = {4, 4, 1}; // MIDDENMIDDEN
-            double[] weightsRM = {1, 2, 2}; // RECHTSMIDDEN
+            double[] weightsLO = {8, 0.5, 0.25}; // LINKSONDER
+            double[] weightsMO = { 2, 1, 0.25}; // MIDDENONDER
+            double[] weightsRO = {2, 0.25, 1}; // RECHTSONDER
+            double[] weightsLM = {4, 0.8, 0.25}; // LINKSMIDDEN
+            double[] weightsMM = {4, 0.25, 0.5}; // MIDDENMIDDEN
+            double[] weightsRM = {2, 0.5, 0.5}; // RECHTSMIDDEN
 
-            double[] weightsT = {5, 1, 0.01}; // TOP
+            double[] weightsT = {2, 0.25, 0.25}; // TOP
 
 
             WeeklySchedule ws = genetic.runSubPopulationAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate, weightsT, weightsLM, weightsMM, weightsRM, weightsLO, weightsMO, weightsRO);
@@ -51,7 +51,7 @@ public class WeeklyGeneticTest {
             dbc.putScheduleWeekly(ws);
 
 
-        }/* */
+        } /**/
     /*
     @Test
     void testAlgo()  throws SQLException, DbControllerException, NotSolvableException {

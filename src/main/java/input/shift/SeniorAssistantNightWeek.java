@@ -12,9 +12,7 @@ public class SeniorAssistantNightWeek extends WeekShift {
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
             Arrays.asList(
                     AssistantType.SA,
-                    AssistantType.SA_F,
-                    AssistantType.SA_NEO,
-                    AssistantType.SA_F_NEO
+                    AssistantType.SA_NEO
             )
     );
 

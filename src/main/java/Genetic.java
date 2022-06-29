@@ -28,6 +28,17 @@ public class Genetic {
         random = new Random(1111);
     }
 
+    public Genetic(InstanceData data, ModelParameters parameters, boolean randomRandom){
+        this.data = data;
+        this.parameters = parameters;
+        if(randomRandom){
+            random = new Random();
+        } else {
+            random = new Random(1111);
+        }
+
+    }
+
 
     public WeeklySchedule runSubPopulationAlgo(int nbIterations, int nbParents, int nbBest, double crossoverRate, double mutationRate) throws NotSolvableException {
 

@@ -17,9 +17,9 @@ public class InstanceGenerator {
 
     static private List<Day> generateDays(int nb_weeks) {
         Calendar cal = new GregorianCalendar();
-        cal.set(Calendar.YEAR, 2021);
+        cal.set(Calendar.YEAR, 2022);
         cal.set(Calendar.MONTH, 1);
-        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.DAY_OF_MONTH, 7);
         List<Day> days = new ArrayList<>();
         Random random = new Random();
         for (int i = 1; i <= 7*nb_weeks; i++) {
@@ -39,7 +39,7 @@ public class InstanceGenerator {
         Random random = new Random();
         for (int i = 0; i < nb_assistants; i++) {
             int ran = random.nextInt(100);
-            if (ran < 8) {      // pregnancy leave
+            if (ran < 0) {      // pregnancy leave (used to be ran < 8)
                 int untilDayNb = days.get( random.nextInt(days.size())).getId();
                 result.add(new Assistant(i, String.format("test %d", i), types.get(i), getIntsUpTill(untilDayNb)));
             } else {            // normal leaves
@@ -58,21 +58,21 @@ public class InstanceGenerator {
         for (int free_weeks = 0; free_weeks < 2; free_weeks++) {
             int ran = random.nextInt(days.size()/7);
             if (ran == 0) {
-                result.addAll(List.of(1, 2, 3));
+                result.addAll(List.of(1, 2, 3, 4, 5, 6, 7));
             } else if (ran == days.size()/7 - 1) {
                 result.addAll(List.of(days.size()-1, days.size()-2, days.size()-3, days.size()-4, days.size()-5, days.size()-6));
             } else {
                 int startDay = 7*ran - 5;
-                for (int i = 0; i < 9; i++) {
+                for (int i = 0; i < 7; i++) {
                     result.add(startDay + i);
                 }
             }
         }
-
+        /*
         for (int free_weekends = 0; free_weekends < 2; free_weekends++) {
             int ran = 7*random.nextInt(days.size()/7);
             result.addAll(List.of(ran+2, ran+3));
-        }
+        } */
 
         return result;
     }
@@ -90,17 +90,19 @@ public class InstanceGenerator {
         Random random = new Random();
         List<AssistantType> result = new ArrayList<>();
         for (int i = 0; i < nb_assistants; i++) {
-            int ran = random.nextInt(100);
-            if (ran < 34) {
+            int ran = random.nextInt(103);
+            if (ran < 30) {
                 result.add(AssistantType.JA);
-            } else if (ran < 39) {
+            } else if (ran < 36) {
                 result.add(AssistantType.JA_F);
-            } else if (ran < 44) {
+            } else if (ran < 39) {
                 result.add(AssistantType.SA);
-            } else if (ran < 46) {
+            } else if (ran < 48) {
                 result.add(AssistantType.SA_F);
-            } else if (ran < 82) {
+            } else if (ran < 78) {
                 result.add(AssistantType.SA_NEO);
+            } else if (ran < 99) {
+                result.add(AssistantType.FELLOWS);
             } else {
                 result.add(AssistantType.SA_F_NEO);
             }
