@@ -1,15 +1,18 @@
 package input.shift;
 
 public enum ShiftType {
-    JANW,
+    SANW,
     JAWE,
     JAHO,
     SAEW,
     SAWE,
     SAHO,
+    SAEV1,
+    SAEV2,
     TPWE,
     TPHO,
-    CALL,
+    //CALL,
     JAEV,
+    TPNF,
     FREE
 }

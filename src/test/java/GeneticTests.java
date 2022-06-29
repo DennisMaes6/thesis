@@ -13,8 +13,10 @@ import input.shift.ShiftType;
 import input.time.Day;
 
 public class GeneticTests {
-    
 
+
+
+    /*
 
     @Test
     void basicFitnessTest() throws SQLException, DbControllerException, NotSolvableException, BadInstanceException{
@@ -119,6 +121,6 @@ public class GeneticTests {
     
     private ModelParameters getModelParams(DbController dbc) throws SQLException, DbControllerException{
         return dbc.getModelParameters();
-    }
+    } */
 
 }

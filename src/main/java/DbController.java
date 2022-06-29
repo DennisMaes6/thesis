@@ -1,9 +1,11 @@
 import exceptions.DbControllerException;
+import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ModelParameters;
 import input.ShiftTypeModelParameters;
 import input.assistant.Assistant;
 import input.assistant.AssistantType;
+import input.shift.Shift;
 import input.shift.ShiftType;
 import input.time.Date;
 import input.time.Day;
@@ -46,8 +48,10 @@ public class DbController {
         int minBalanceJaev = rs.getInt("min_balance_jaev");
         
         List<ShiftTypeModelParameters> stmps = getShiftTypeModelParameters();
-        
-        return new ModelParameters(minBalance, minBalanceJaev, stmps);
+
+        List<Double> weightParams = getWeightParameters();
+
+        return new ModelParameters(minBalance, minBalanceJaev, stmps, weightParams);
     }
 
     public void putMinBalance(int newMinBalance) throws SQLException {
@@ -57,6 +61,22 @@ public class DbController {
         pstmt.execute();
         this.conn.commit();
     }
+
+    public void putStats(WeeklySchedule ws ) throws SQLException, NotSolvableException {
+        String sql = "UPDATE stats SET Coverage = ?, Balance = ?, Fairness = ? WHERE id = 1";
+
+
+
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+        pstmt.setDouble(1, ScheduleDecoder.scheduleFromWeeklySchedule(ws).getFitnessScore());
+        pstmt.setDouble(2, FitnessEval.getBalanceScore(ws, 1, 1)); // TODO: aanpassen om streak/spread weight niet te hardcoden
+        pstmt.setDouble(3, ws.getFairnessScore());
+        pstmt.execute();
+        this.conn.commit();
+    }
+
+
+
 
     private List<ShiftTypeModelParameters> getShiftTypeModelParameters() throws SQLException {
         String sql = "SELECT shift_type, shift_workload, shift_coverage, max_buffer FROM shift_type_parameters";
@@ -72,6 +92,19 @@ public class DbController {
 
             );
             result.add(stmp);
+        }
+        return result;
+    }
+
+    private List<Double> getWeightParameters() throws SQLException {
+        String sql = "SELECT coverage, balance, fairness FROM weights";
+        ResultSet rs = this.conn.createStatement().executeQuery(sql);
+
+        List<Double> result = new ArrayList<>();
+        while (rs.next()) {
+            result.add(rs.getDouble("coverage"));
+            result.add(rs.getDouble("balance"));
+            result.add(rs.getDouble("fairness"));
         }
         return result;
     }
@@ -124,6 +157,15 @@ public class DbController {
         conn.commit();
     }
 
+    public void putScheduleWeekly(WeeklySchedule ws) throws SQLException, NotSolvableException {
+        Schedule decoded = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+        putScores(ws);
+        putStats(ws);
+        putIndividualSchedules(ws);
+        putAssignments(decoded);
+        conn.commit();
+    }
+
     private void putScores(Schedule schedule) throws SQLException {
         String deleteSql = "DELETE FROM schedule";
         this.conn.createStatement().execute(deleteSql);
@@ -137,8 +179,34 @@ public class DbController {
         pstmt.setDouble(2, schedule.balanceScore());
         pstmt.setDouble(3, schedule.jaevFairnessScore());
         pstmt.setDouble(4, schedule.jaevBalanceScore());
+
         pstmt.execute();
     }
+    private void putScores(WeeklySchedule ws) throws SQLException, NotSolvableException {
+        Schedule schedule = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+
+        String deleteSql = "DELETE FROM schedule";
+        this.conn.createStatement().execute(deleteSql);
+
+        String sql = "INSERT OR REPLACE INTO schedule(id, fairness_score, balance_score, " +
+                "jaev_fairness_score, jaev_balance_score, Coverage, Balance, Fairness, TotalNbShifts, TotalNbShiftsAssigned) " +
+                "VALUES(1, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+        pstmt.setDouble(1, schedule.fairnessScore());
+        pstmt.setDouble(2, schedule.balanceScore());
+        pstmt.setDouble(3, schedule.jaevFairnessScore());
+        pstmt.setDouble(4, schedule.jaevBalanceScore());
+        pstmt.setDouble(5, schedule.getFitnessScore());
+        pstmt.setDouble(6, FitnessEval.getBalanceScore(ws, 1, 1)); // TODO: aanpassen om streak/spread weight niet te hardcoden
+        pstmt.setDouble(7, ws.getFairnessScore());
+        pstmt.setInt(8, ws.getTotalNbShifts());
+        pstmt.setInt(9, ws.getAssignedShiftsTotal());
+        pstmt.execute();
+    }
+
+
+
 
     private void putIndividualSchedules(Schedule schedule) throws SQLException {
         schedule.getData().getAssistants().sort(Comparator.comparing(Assistant::getType));
@@ -148,6 +216,7 @@ public class DbController {
         String sql = "INSERT INTO individual_schedule(assistant_id, workload) VALUES (?, ?)";
         PreparedStatement pstmt = this.conn.prepareStatement(sql);
         for (Assistant assistant : schedule.getData().getAssistants()) {
+
             pstmt.setInt(1, assistant.getId());
             pstmt.setDouble(2, schedule.workloadForAssistant(assistant));
             pstmt.addBatch();
@@ -155,6 +224,45 @@ public class DbController {
         pstmt.executeBatch();
 
     }
+
+
+    private void putIndividualSchedules(WeeklySchedule ws) throws SQLException, NotSolvableException {
+        ws.getData().getAssistants().sort(Comparator.comparing(Assistant::getType));
+        String deleteSql = "DELETE FROM individual_schedule";
+        this.conn.createStatement().execute(deleteSql);
+
+        String sql = "INSERT INTO individual_schedule(assistant_id, absolute_workload, relative_workload, days_available, days_worked, days_vacation, avg_days_rest) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        PreparedStatement pstmt = this.conn.prepareStatement(sql);
+
+
+        Schedule decoded = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+
+        for(Assistant assistant : ws.getAssistants()) {
+            double currentTotalWL = ws.getScheduleWeeks().get(assistant)
+                    .stream().
+                    filter(s -> s.getType() != ShiftType.FREE)
+                    .mapToDouble(Shift::getDailyWorkload)
+                    .sum();
+            double relativeWL = currentTotalWL / (getInstanceData().getDays().size() - assistant.getFreeDayIds().size()); // Normaliseren vakantiedagen
+
+
+            pstmt.setInt(1, assistant.getId());
+            pstmt.setDouble(2, currentTotalWL);
+            pstmt.setDouble(3, relativeWL);
+            pstmt.setInt(4, ws.getData().getDays().size() - assistant.getFreeDayIds().size());
+            pstmt.setInt(5, FitnessEval.daysWorked(decoded, assistant));
+            pstmt.setInt(6, assistant.getFreeDayIds().size());
+            pstmt.setDouble(7, FitnessEval.avgDaysRest(decoded, assistant ));
+
+
+            pstmt.addBatch();
+        }
+
+
+        pstmt.executeBatch();
+
+    }
+
 
     private void putAssignments(Schedule schedule) throws SQLException {
         String deleteSql = "DELETE FROM assignment";
@@ -211,6 +319,8 @@ public class DbController {
        }
        pstmt.executeBatch();
     }
+
+
 
     private void putAssistants(List<Assistant> assistants) throws SQLException {
         String deleteSql = "DELETE FROM assistant";

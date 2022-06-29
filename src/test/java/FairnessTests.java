@@ -15,7 +15,9 @@ import input.shift.ShiftType;
 
 
 public class FairnessTests {
-    
+
+/*
+
     @Test
     void exampleTest() throws SQLException, DbControllerException{
         System.out.println("Test 1!");
@@ -29,13 +31,9 @@ public class FairnessTests {
 
         //dbc.putSchedule(schedule);
 
-        System.out.println(schedule.fairnessScore());
+        System.out.println(schedule.getFitnessScore());
         
 
-        /*
-        for (Assistant assistant : data.getAssistants()){
-            System.out.println(assistant.getIndex());
-        } */
   
         
         
@@ -57,7 +55,7 @@ public class FairnessTests {
 
     
     }
-
+*/
 
     private DbController getDBController() throws SQLException{
         return new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");

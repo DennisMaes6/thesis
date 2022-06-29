@@ -32,7 +32,7 @@ public class GA {
     public GA(InstanceData data, ModelParameters parameters) {
         this.data = data;
         this.parameters = parameters;
-        this.random = new Random(1111);
+        this.random = new Random(1223);
     }
 
 

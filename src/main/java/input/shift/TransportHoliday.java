@@ -12,7 +12,8 @@ public class TransportHoliday extends HolidayShift {
     private static final HashSet<AssistantType> ALLOWED_ASSISTANT_TYPES = new HashSet<>(
             Arrays.asList(
                     AssistantType.SA_NEO,
-                    AssistantType.SA_F_NEO
+                    AssistantType.SA_F_NEO,
+                    AssistantType.FELLOWS
             )
     );
 

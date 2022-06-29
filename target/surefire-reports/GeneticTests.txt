@@ -1,0 +1,23 @@
+-------------------------------------------------------------------------------
+Test set: GeneticTests
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 4, Skipped: 0, Time elapsed: 13.978 s <<< FAILURE! - in GeneticTests
+geneticTest  Time elapsed: 4.047 s  <<< ERROR!
+org.sqlite.SQLiteException: [SQLITE_BUSY]  The database file is locked (database is locked)
+	at GeneticTests.geneticTest(GeneticTests.java:56)
+
+weekFromDaysTest  Time elapsed: 3.141 s  <<< ERROR!
+org.sqlite.SQLiteException: [SQLITE_BUSY]  The database file is locked (database is locked)
+	at GeneticTests.getInstanceData(GeneticTests.java:117)
+	at GeneticTests.weekFromDaysTest(GeneticTests.java:100)
+
+basicFitnessTest  Time elapsed: 3.128 s  <<< ERROR!
+org.sqlite.SQLiteException: [SQLITE_BUSY]  The database file is locked (database is locked)
+	at GeneticTests.getInstanceData(GeneticTests.java:117)
+	at GeneticTests.basicFitnessTest(GeneticTests.java:24)
+
+crossoverTest1  Time elapsed: 3.149 s  <<< ERROR!
+org.sqlite.SQLiteException: [SQLITE_BUSY]  The database file is locked (database is locked)
+	at GeneticTests.getInstanceData(GeneticTests.java:117)
+	at GeneticTests.crossoverTest1(GeneticTests.java:63)
+

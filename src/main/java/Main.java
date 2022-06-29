@@ -4,6 +4,7 @@ import exceptions.NoSuitableAssistantException;
 import exceptions.NotSolvableException;
 import input.InstanceData;
 import input.ModelParameters;
+import org.apache.commons.cli.CommandLineParser;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -14,6 +15,7 @@ import java.net.URLConnection;
 import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Main {
@@ -124,7 +126,62 @@ public class Main {
         }
         writer.close();
         */
-        runAlgo();
+        //runAlgo();
+        //runGenetic(args);
+        System.out.println("RUNNING MAIN");
+        //runSmallerSubPopulations(args);
+
+        if(args.length == 7){
+            runGenetic(args);
+        } else if(args.length == 8){
+            runGeneticNewRandom(args);
+        } else if(args.length == 12){
+            runSmallerSubPopulations(args);
+        } else if(args.length == 13){
+            runSmallerSubPopulationsWithDBFile(args);
+        }
+
+        //getScheduleFromGenetic();
+
+    }
+
+    public static void getScheduleFromGenetic() throws SQLException, DbControllerException, NotSolvableException {
+        DbController dbController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");
+        InstanceData data = dbController.getInstanceData();
+        ModelParameters params = dbController.getModelParameters();
+
+        double covParam = params.getCoverageParameter();
+        double balParam = params.getBalanceParameter();
+        double fairParam = params.getFairnessParameter();
+
+
+        double[] top = new double[]{covParam, balParam, fairParam };
+        double[] lm = new double[]{covParam * 2, balParam * 2, fairParam };
+        double[] mm = new double[]{covParam * 2, balParam, fairParam * 2};
+        double[] rm = new double[]{covParam, balParam * 2, fairParam * 2};
+        double[] lo = new double[]{covParam * 4, balParam, fairParam};
+        double[] mo = new double[]{covParam, balParam * 4, fairParam};
+        double[] ro = new double[]{covParam, balParam, fairParam * 4};
+
+        Genetic genetic = new Genetic(data, params);
+
+        int nbIterations = 1;
+        int nbParents = 900;
+        int nbBest = 300;
+        double crossoverRate = 0.8;
+        double mutationRate = 0.8;
+
+        System.out.println("NB ITERS: " + nbIterations
+                + " | NB PARENTS: "  + nbParents
+                + " | NB BEST: " + nbBest);
+
+        WeeklySchedule ws = genetic.runSubPopulationAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate,
+                top, lm, mm, rm, lo, mo, ro);
+
+        //Schedule decoded = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+
+        dbController.putScheduleWeekly(ws);
+
 
     }
 
@@ -149,7 +206,235 @@ public class Main {
         dbController.putSchedule(schedule);
         System.out.println("Writing to database done.");
 
-    } 
+    }
+
+    public static void runGenetic(String[] args) throws SQLException, DbControllerException, NotSolvableException {
+
+        int nbIterations = Integer.parseInt(args[0]);
+        int nbParents = Integer.parseInt(args[1]);
+        int nbBest = Integer.parseInt(args[2]);
+        double crossoverRate = Double.parseDouble(args[3]);
+        double mutationRate = Double.parseDouble(args[4]);
+
+        double[] weights = parseInputString(args[5]);
+
+        double weightCoverage = weights[0];
+        double weightBalance = weights[1];
+        double weightFairness = weights[2];
+        //double weightStreak = Double.parseDouble(args[8]);
+        //double weightSpread = Double.parseDouble(args[9]);
+        double weightStreak = 1.0;
+        double weightSpread = 1.0;
+
+        String dbFile = args[6];
+
+        //DbController dbController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");
+        DbController dbController = new DbController(System.getProperty("user.home") + dbFile);
+        InstanceData data = dbController.getInstanceData();
+        ModelParameters params = dbController.getModelParameters();
+
+        Genetic genetic = new Genetic(data, params);
+
+        WeeklySchedule ws = genetic.runAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate,  weightCoverage, weightBalance, weightFairness, weightStreak, weightSpread);
+        dbController.putScheduleWeekly(ws);
+
+    }
+
+    public static void runGeneticNewRandom(String[] args) throws SQLException, DbControllerException, NotSolvableException {
+
+        int nbIterations = Integer.parseInt(args[0]);
+        int nbParents = Integer.parseInt(args[1]);
+        int nbBest = Integer.parseInt(args[2]);
+        double crossoverRate = Double.parseDouble(args[3]);
+        double mutationRate = Double.parseDouble(args[4]);
+
+        double[] weights = parseInputString(args[5]);
+
+        double weightCoverage = weights[0];
+        double weightBalance = weights[1];
+        double weightFairness = weights[2];
+        //double weightStreak = Double.parseDouble(args[8]);
+        //double weightSpread = Double.parseDouble(args[9]);
+        double weightStreak = 1.0;
+        double weightSpread = 1.0;
+
+        String dbFile = args[6];
+
+        //DbController dbController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");
+        DbController dbController = new DbController(System.getProperty("user.home") + dbFile);
+        InstanceData data = dbController.getInstanceData();
+        ModelParameters params = dbController.getModelParameters();
+
+        Genetic genetic = new Genetic(data, params, true);
+
+        WeeklySchedule ws = genetic.runAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate,  weightCoverage, weightBalance, weightFairness, weightStreak, weightSpread);
+        dbController.putScheduleWeekly(ws);
+
+    }
+
+
+    public static void runSmallerSubPopulations(String[] args) throws SQLException, DbControllerException, NotSolvableException {
+        // Volgorde arguments: TOP, LM, MM, RM, LO, MO, RO
+
+        String topS = args[0];
+        String lmS = args[1];
+        String mmS = args[2];
+        String rmS = args[3];
+        String loS = args[4];
+        String moS = args[5];
+        String roS = args[6];
+
+        double[] top = parseInputString(topS);
+        double[] lm = parseInputString(lmS);
+        double[] mm = parseInputString(mmS);
+        double[] rm = parseInputString(rmS);
+        double[] lo = parseInputString(loS);
+        double[] mo = parseInputString(moS);
+        double[] ro = parseInputString(roS);
+
+
+
+        DbController dbController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/generator_test2.db");
+        InstanceData data = dbController.getInstanceData();
+        ModelParameters params = dbController.getModelParameters();
+
+        Genetic genetic = new Genetic(data, params);
+
+        int nbIterations = Integer.parseInt(args[7]);
+        int nbParents = Integer.parseInt(args[8]);
+        int nbBest = Integer.parseInt(args[9]);
+        double crossoverRate = Double.parseDouble(args[10]);
+        double mutationRate = Double.parseDouble(args[11]);
+
+        System.out.println("NB ITERS: " + nbIterations
+                + " | NB PARENTS: "  + nbParents
+                + " | NB BEST: " + nbBest);
+
+        WeeklySchedule ws = genetic.runSubPopulationAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate,
+                top, lm, mm, rm, lo, mo, ro);
+
+        //Schedule decoded = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+
+        dbController.putScheduleWeekly(ws);
+
+    }
+
+
+    public static void runSmallerSubPopulationsWithDBFile(String[] args) throws SQLException, DbControllerException, NotSolvableException {
+        // Volgorde arguments: TOP, LM, MM, RM, LO, MO, RO
+
+        String topS = args[0];
+        String lmS = args[1];
+        String mmS = args[2];
+        String rmS = args[3];
+        String loS = args[4];
+        String moS = args[5];
+        String roS = args[6];
+
+        double[] top = parseInputString(topS);
+        double[] lm = parseInputString(lmS);
+        double[] mm = parseInputString(mmS);
+        double[] rm = parseInputString(rmS);
+        double[] lo = parseInputString(loS);
+        double[] mo = parseInputString(moS);
+        double[] ro = parseInputString(roS);
+
+        String dbFile = args[12];
+
+        DbController dbController = new DbController(System.getProperty("user.home") + dbFile);
+        InstanceData data = dbController.getInstanceData();
+        ModelParameters params = dbController.getModelParameters();
+
+        Genetic genetic = new Genetic(data, params);
+
+        int nbIterations = Integer.parseInt(args[7]);
+        int nbParents = Integer.parseInt(args[8]);
+        int nbBest = Integer.parseInt(args[9]);
+        double crossoverRate = Double.parseDouble(args[10]);
+        double mutationRate = Double.parseDouble(args[11]);
+
+        System.out.println("NB ITERS: " + nbIterations
+                + " | NB PARENTS: "  + nbParents
+                + " | NB BEST: " + nbBest);
+
+        WeeklySchedule ws = genetic.runSubPopulationAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate,
+                top, lm, mm, rm, lo, mo, ro);
+
+        //Schedule decoded = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+
+        dbController.putScheduleWeekly(ws);
+
+    }
+
+
+    public static void runSubPopulations(String[] args) throws SQLException, DbControllerException, NotSolvableException {
+        // Volgorde arguments: TOP, LM, MM, RM, LO, MO, RO, LLO, LRO, MLO, MRO, RLO, RRO
+
+
+        String topS = args[0];
+        String lmS = args[1];
+        String mmS = args[2];
+        String rmS = args[3];
+        String loS = args[4];
+        String moS = args[5];
+        String roS = args[6];
+        String lloS = args[7];
+        String lroS = args[8];
+        String mloS = args[9];
+        String mroS = args[10];
+        String rloS = args[11];
+        String rroS = args[12];
+
+        double[] top = parseInputString(topS);
+        double[] lm = parseInputString(lmS);
+        double[] mm = parseInputString(mmS);
+        double[] rm = parseInputString(rmS);
+        double[] lo = parseInputString(loS);
+        double[] mo = parseInputString(moS);
+        double[] ro = parseInputString(roS);
+        double[] llo = parseInputString(lloS);
+        double[] lro = parseInputString(lroS);
+        double[] mlo = parseInputString(mloS);
+        double[] mro = parseInputString(mroS);
+        double[] rlo = parseInputString(rloS);
+        double[] rro = parseInputString(rroS);
+
+        DbController dbController = new DbController(System.getProperty("user.home") + "/Library/Mobile Documents/com~apple~CloudDocs/School/2021-2022/Thesis/applicatie/scheduler/backend/demo.db");
+        InstanceData data = dbController.getInstanceData();
+        ModelParameters params = dbController.getModelParameters();
+
+        Genetic genetic = new Genetic(data, params);
+
+        int nbIterations = Integer.parseInt(args[13]);
+        int nbParents = Integer.parseInt(args[14]);
+        int nbBest = Integer.parseInt(args[15]);
+        double crossoverRate = Double.parseDouble(args[16]);
+        double mutationRate = Double.parseDouble(args[17]);
+
+        System.out.println("NB ITERS: " + nbIterations
+                + " | NB PARENTS: "  + nbParents
+                + " | NB BEST: " + nbBest);
+
+        WeeklySchedule ws = genetic.runSubPopulationAlgo(nbIterations, nbParents, nbBest, crossoverRate, mutationRate,
+                top, lm, mm, rm, lo, mo, ro, llo, lro, mlo, mro, rlo, rro);
+
+        Schedule decoded = ScheduleDecoder.scheduleFromWeeklySchedule(ws);
+
+        dbController.putSchedule(decoded);
+
+    }
+
+    private static double[] parseInputString(String inputString){
+
+        List<String> splitted = List.of(inputString.split("_"));
+
+        System.out.println(splitted);
+        double[] result = new double[3];
+        result[0] = Double.parseDouble(splitted.get(0));
+        result[1] = Double.parseDouble(splitted.get(1));
+        result[2] = Double.parseDouble(splitted.get(2));
+        return result;
+    }
 
     
 }
